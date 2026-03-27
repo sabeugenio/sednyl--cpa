@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const pool = require('../db');
 
 // GET /api/settings - Get all settings
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const rows = db.prepare('SELECT * FROM settings').all();
+    const { rows } = await pool.query('SELECT * FROM settings');
     const settings = {};
     rows.forEach((r) => { settings[r.key] = r.value; });
     res.json(settings);
@@ -15,17 +15,17 @@ router.get('/', (req, res) => {
 });
 
 // POST /api/settings - Update a setting
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { key, value } = req.body;
     if (!key) return res.status(400).json({ error: 'key is required' });
 
-    db.prepare(`
-      INSERT INTO settings (key, value) VALUES (@key, @value)
-      ON CONFLICT(key) DO UPDATE SET value = @value
-    `).run({ key, value: String(value) });
+    await pool.query(`
+      INSERT INTO settings (key, value) VALUES ($1, $2)
+      ON CONFLICT(key) DO UPDATE SET value = $2
+    `, [key, String(value)]);
 
-    const rows = db.prepare('SELECT * FROM settings').all();
+    const { rows } = await pool.query('SELECT * FROM settings');
     const settings = {};
     rows.forEach((r) => { settings[r.key] = r.value; });
     res.json(settings);

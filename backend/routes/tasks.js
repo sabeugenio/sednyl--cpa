@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const pool = require('../db');
 
 // GET /api/tasks - Get all tasks
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const tasks = db.prepare('SELECT * FROM tasks ORDER BY type, id').all();
-    res.json(tasks);
+    const { rows } = await pool.query('SELECT * FROM tasks ORDER BY type, id');
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // POST /api/tasks - Replace all tasks with new set
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { tasks } = req.body;
 
@@ -21,26 +21,28 @@ router.post('/', (req, res) => {
       return res.status(400).json({ error: 'tasks must be an array' });
     }
 
-    const deleteAll = db.prepare('DELETE FROM tasks');
-    const insert = db.prepare(
-      'INSERT INTO tasks (type, content, completed) VALUES (@type, @content, @completed)'
-    );
-
-    const upsertAll = db.transaction((taskList) => {
-      deleteAll.run();
-      for (const task of taskList) {
-        insert.run({
-          type: task.type,
-          content: task.content || '',
-          completed: task.completed ? 1 : 0
-        });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM tasks');
+      
+      for (const task of tasks) {
+        await client.query(
+          'INSERT INTO tasks (type, content, completed) VALUES ($1, $2, $3)',
+          [task.type, task.content || '', task.completed ? 1 : 0]
+        );
       }
-    });
+      
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
 
-    upsertAll(tasks);
-
-    const updatedTasks = db.prepare('SELECT * FROM tasks ORDER BY type, id').all();
-    res.json(updatedTasks);
+    const { rows } = await pool.query('SELECT * FROM tasks ORDER BY type, id');
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

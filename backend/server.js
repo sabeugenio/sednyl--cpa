@@ -19,66 +19,62 @@ app.use('/api/tasks', tasksRouter);
 app.use('/api/settings', settingsRouter);
 
 // Export endpoint - download all data as JSON
-app.get('/api/export', (req, res) => {
-  const db = require('./db');
+app.get('/api/export', async (req, res) => {
+  const pool = require('./db');
   try {
-    const entries = db.prepare('SELECT * FROM entries ORDER BY date').all();
-    const tasks = db.prepare('SELECT * FROM tasks ORDER BY type, id').all();
-    res.json({ entries, tasks, exportedAt: new Date().toISOString() });
+    const [entriesReq, tasksReq] = await Promise.all([
+      pool.query('SELECT * FROM entries ORDER BY date'),
+      pool.query('SELECT * FROM tasks ORDER BY type, id')
+    ]);
+    res.json({ entries: entriesReq.rows, tasks: tasksReq.rows, exportedAt: new Date().toISOString() });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // Import endpoint - restore data from JSON
-app.post('/api/import', (req, res) => {
-  const db = require('./db');
+app.post('/api/import', async (req, res) => {
+  const pool = require('./db');
   try {
     const { entries, tasks } = req.body;
 
-    const importData = db.transaction(() => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
       if (entries && Array.isArray(entries)) {
-        const upsertEntry = db.prepare(`
-          INSERT INTO entries (date, status, what_i_did, next_step, feeling, thought, free_write)
-          VALUES (@date, @status, @what_i_did, @next_step, @feeling, @thought, @free_write)
-          ON CONFLICT(date) DO UPDATE SET
-            status = @status,
-            what_i_did = @what_i_did,
-            next_step = @next_step,
-            feeling = @feeling,
-            thought = @thought,
-            free_write = @free_write,
-            updated_at = datetime('now')
-        `);
         for (const entry of entries) {
-          upsertEntry.run({
-            date: entry.date,
-            status: entry.status,
-            what_i_did: entry.what_i_did || '',
-            next_step: entry.next_step || '',
-            feeling: entry.feeling || '',
-            thought: entry.thought || '',
-            free_write: entry.free_write || ''
-          });
+          await client.query(`
+            INSERT INTO entries (date, status, what_i_did, next_step, feeling, thought, free_write)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ON CONFLICT(date) DO UPDATE SET
+              status = $2, what_i_did = $3, next_step = $4,
+              feeling = $5, thought = $6, free_write = $7, updated_at = CURRENT_TIMESTAMP
+          `, [
+            entry.date, entry.status, entry.what_i_did || '', entry.next_step || '',
+            entry.feeling || '', entry.thought || '', entry.free_write || ''
+          ]);
         }
       }
 
       if (tasks && Array.isArray(tasks)) {
-        db.prepare('DELETE FROM tasks').run();
-        const insertTask = db.prepare(
-          'INSERT INTO tasks (type, content, completed) VALUES (@type, @content, @completed)'
-        );
+        await client.query('DELETE FROM tasks');
         for (const task of tasks) {
-          insertTask.run({
-            type: task.type,
-            content: task.content || '',
-            completed: task.completed ? 1 : 0
-          });
+          await client.query(
+            'INSERT INTO tasks (type, content, completed) VALUES ($1, $2, $3)',
+            [task.type, task.content || '', task.completed ? 1 : 0]
+          );
         }
       }
-    });
 
-    importData();
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
     res.json({ message: 'Data imported successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
