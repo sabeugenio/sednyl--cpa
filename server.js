@@ -1,10 +1,11 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
 
-const entriesRouter = require('./routes/entries');
-const tasksRouter = require('./routes/tasks');
-const settingsRouter = require('./routes/settings');
+import entriesRouter from './routes/entries.js';
+import tasksRouter from './routes/tasks.js';
+import settingsRouter from './routes/settings.js';
+import pool from './db.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -20,7 +21,6 @@ app.use('/api/settings', settingsRouter);
 
 // Export endpoint - download all data as JSON
 app.get('/api/export', async (req, res) => {
-  const pool = require('./db');
   try {
     const [entriesReq, tasksReq] = await Promise.all([
       pool.query('SELECT * FROM entries ORDER BY date'),
@@ -34,7 +34,6 @@ app.get('/api/export', async (req, res) => {
 
 // Import endpoint - restore data from JSON
 app.post('/api/import', async (req, res) => {
-  const pool = require('./db');
   try {
     const { entries, tasks } = req.body;
 

@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const pool = require('../db');
+import pool from '../db.js';
 
 // GET /api/settings - Get all settings
 router.get('/', async (req, res) => {
@@ -34,4 +34,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
