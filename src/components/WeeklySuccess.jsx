@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { Star, Leaf, Sprout, Heart, Flame } from 'lucide-react';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -47,11 +48,19 @@ export default function WeeklySuccess({ entries }) {
 
     let message;
     if (isSuccess) {
-      message = showedUpCount >= 6 ? "Strong week so far 🌟" : "You're on track 🌿";
+      message = showedUpCount >= 6 ? (
+        <>Strong week so far <Star size={16} fill="var(--primary)" style={{ marginLeft: 4 }} /></>
+      ) : (
+        <>You're on track <Leaf size={16} color="var(--primary)" style={{ marginLeft: 4 }} /></>
+      );
     } else if (showedUpCount > 0) {
-      message = remaining === 1 ? "One more day to hit your goal 🌱" : `${remaining} more days — you've got this 💙`;
+      message = remaining === 1 ? (
+        <>One more day to hit your goal <Sprout size={16} color="var(--primary)" style={{ marginLeft: 4 }} /></>
+      ) : (
+        <>{remaining} more days — you've got this <Heart size={16} fill="var(--primary)" style={{ marginLeft: 4 }} /></>
+      );
     } else {
-      message = "A new week starts fresh 🌱";
+      message = <>A new week starts fresh <Sprout size={16} color="var(--primary)" style={{ marginLeft: 4 }} /></>;
     }
 
     // Calculate streak (consecutive days showed up, not including missed/reset)
@@ -85,11 +94,13 @@ export default function WeeklySuccess({ entries }) {
         })}
       </div>
 
-      <p className="weekly-message">{message}</p>
+      <div className="weekly-message" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {message}
+      </div>
 
       {streak > 1 && (
-        <div className="streak-badge">
-          🔥 {streak} day streak
+        <div className="streak-badge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <Flame size={16} fill="white" /> {streak} day streak
         </div>
       )}
     </div>

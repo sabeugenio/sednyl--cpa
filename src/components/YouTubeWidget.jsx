@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import YouTube from 'react-youtube';
+import { Play, Library, Link as LinkIcon, Minus, Search, X, MonitorPlay } from 'lucide-react';
 import PlaylistModal from './PlaylistModal';
 import { fetchPlaylists, savePlaylist, deletePlaylist, setActivePlaylist } from '../utils/api';
 
@@ -170,7 +171,7 @@ export default function YouTubeWidget() {
     <div className={`yt-widget ${collapsed ? 'yt-widget-is-collapsed' : ''}`} style={collapsed ? { padding: 0 } : {}}>
       {collapsed && (
         <div className="yt-widget-collapsed" onClick={() => setCollapsed(false)}>
-          <span className="yt-collapsed-icon">▶</span>
+          <MonitorPlay size={16} className="yt-collapsed-icon" />
           <span className="yt-collapsed-label">
             YouTube Study Videos {activeVideoId ? (isPlaying ? '(Playing)' : '(Paused)') : ''}
           </span>
@@ -180,33 +181,33 @@ export default function YouTubeWidget() {
       <div style={{ display: collapsed ? 'none' : 'block' }}>
         <div className="yt-header">
           <div className="yt-header-left">
-            <span className="yt-icon">▶</span>
-          <span className="yt-title">Study Videos</span>
+            <MonitorPlay size={18} className="yt-icon" />
+            <span className="yt-title">Study Videos</span>
+          </div>
+          <div className="yt-header-right">
+            <button
+              className="yt-header-btn"
+              onClick={() => setShowModal(true)}
+              title="Your Library"
+            >
+              <Library size={16} />
+            </button>
+            <button
+              className="yt-header-btn"
+              onClick={() => { setShowUrlInput(!showUrlInput); setSavePromptPending(null); }}
+              title="Paste YouTube URL"
+            >
+              <LinkIcon size={16} />
+            </button>
+            <button
+              className="yt-header-btn"
+              onClick={() => setCollapsed(true)}
+              title="Minimize"
+            >
+              <Minus size={16} />
+            </button>
+          </div>
         </div>
-        <div className="yt-header-right">
-          <button
-            className="yt-header-btn"
-            onClick={() => setShowModal(true)}
-            title="Your Library"
-          >
-            📚
-          </button>
-          <button
-            className="yt-header-btn"
-            onClick={() => { setShowUrlInput(!showUrlInput); setSavePromptPending(null); }}
-            title="Paste YouTube URL"
-          >
-            🔗
-          </button>
-          <button
-            className="yt-header-btn"
-            onClick={() => setCollapsed(true)}
-            title="Minimize"
-          >
-            —
-          </button>
-        </div>
-      </div>
 
       {/* Save Prompt (intercepts playing) */}
       {savePromptPending && (
@@ -268,12 +269,18 @@ export default function YouTubeWidget() {
               className="yt-search-btn" 
               onClick={() => { setQuery(''); setResults([]); setError(null); }}
               title="Clear Search"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              ✕
+              <X size={15} />
             </button>
           )}
-          <button type="submit" className="yt-search-btn" disabled={isSearching || !query.trim()}>
-            {isSearching ? '…' : '🔍'}
+          <button 
+            type="submit" 
+            className="yt-search-btn" 
+            disabled={isSearching || !query.trim()}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {isSearching ? '…' : <Search size={15} />}
           </button>
         </form>
       )}
@@ -297,8 +304,12 @@ export default function YouTubeWidget() {
               onEnd={() => setIsPlaying(false)}
             />
           </div>
-          <button className="yt-close-player" onClick={handleClosePlayer}>
-            ✕ Close Player
+          <button 
+            className="yt-close-player" 
+            onClick={handleClosePlayer}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+          >
+            <X size={14} /> Close Player
           </button>
         </div>
       )}

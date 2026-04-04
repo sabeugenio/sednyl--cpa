@@ -6,6 +6,7 @@ import entriesRouter from './routes/entries.js';
 import tasksRouter from './routes/tasks.js';
 import settingsRouter from './routes/settings.js';
 import playlistsRouter from './routes/playlists.js';
+import versesRouter from './routes/verses.js';
 import pool from './db.js';
 
 const app = express();
@@ -20,6 +21,7 @@ app.use('/api/entries', entriesRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/playlists', playlistsRouter);
+app.use('/api', versesRouter);
 
 // Export endpoint - download all data as JSON
 app.get('/api/export', async (req, res) => {

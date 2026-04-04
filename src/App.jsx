@@ -9,8 +9,11 @@ import TaskPanel from './components/TaskPanel';
 import WeeklySuccess from './components/WeeklySuccess';
 import StudyGuidance from './components/StudyGuidance';
 import YouTubeWidget from './components/YouTubeWidget';
+import BibleVerse from './components/BibleVerse';
 import { fetchEntries, fetchEntryByDate, saveEntry, fetchTasks, saveTasks, exportData, importData, fetchSettings, saveSetting } from './utils/api';
 import { loadTimerState, clearTimerState } from './utils/timerStorage';
+
+import { Flame, Trophy, Sprout, Sun } from 'lucide-react';
 
 function getTodayStr() {
   const now = new Date();
@@ -18,10 +21,10 @@ function getTodayStr() {
 }
 
 const TOAST_MESSAGES = {
-  peak_focus: "Amazing discipline! 🔥",
-  great_progress: "Great progress today 💪",
-  getting_started: "You started — that matters 🌱",
-  reset_day: "Tomorrow is another chance 🌼",
+  peak_focus: { text: "Amazing discipline!", icon: <Flame size={16} /> },
+  great_progress: { text: "Great progress today", icon: <Trophy size={16} /> },
+  getting_started: { text: "You started — that matters", icon: <Sprout size={16} /> },
+  reset_day: { text: "Tomorrow is another chance", icon: <Sun size={16} /> },
 };
 
 function App() {
@@ -286,7 +289,7 @@ function App() {
   };
 
   const getToastMessage = (status) => {
-    return TOAST_MESSAGES[status] || "Saved ✓";
+    return TOAST_MESSAGES[status] || { text: "Saved ✓", icon: null };
   };
 
   // Export
@@ -340,6 +343,8 @@ function App() {
             onExpand={handleExpand}
           />
         )}
+
+        <BibleVerse />
 
         <div className="main-content">
           <div className="left-column">
@@ -425,7 +430,11 @@ function App() {
         />
       )}
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && (
+        <div className="toast" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {toast.text} {toast.icon}
+        </div>
+      )}
     </>
   );
 }

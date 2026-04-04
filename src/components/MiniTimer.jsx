@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Play, Pause, Square, Maximize2, Flame, Trophy, Sprout, Sun } from 'lucide-react';
 import { updateSession } from '../utils/api';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/timerStorage';
 
@@ -17,10 +18,10 @@ function computeStatus(totalSeconds) {
 }
 
 const STATUS_LABELS = {
-  peak_focus:      { emoji: '🔥', label: 'Peak Focus' },
-  great_progress:  { emoji: '💪', label: 'Great Progress' },
-  getting_started: { emoji: '🌱', label: 'Getting Started' },
-  reset_day:       { emoji: '🌼', label: 'Reset Day' },
+  peak_focus:      { icon: <Flame size={16} />, label: 'Peak Focus' },
+  great_progress:  { icon: <Trophy size={16} />, label: 'Great Progress' },
+  getting_started: { icon: <Sprout size={16} />, label: 'Getting Started' },
+  reset_day:       { icon: <Sun size={16} />, label: 'Reset Day' },
 };
 
 export default function MiniTimer({ date, entry, onEnd, onExpand }) {
@@ -206,8 +207,8 @@ export default function MiniTimer({ date, entry, onEnd, onExpand }) {
           <span className="mini-timer-date">— {dateLabel}</span>
         </div>
         <div className="mini-timer-time">{formatTime(totalTime)}</div>
-        <div className={`mini-timer-status-badge status-${currentStatus}`}>
-          {statusInfo.emoji} {statusInfo.label}
+        <div className={`mini-timer-status-badge status-${currentStatus}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {statusInfo.icon} {statusInfo.label}
         </div>
       </div>
 
@@ -215,19 +216,19 @@ export default function MiniTimer({ date, entry, onEnd, onExpand }) {
         {!showEndConfirm ? (
           <div className="mini-timer-actions">
             {isRunning ? (
-              <button className="mini-timer-btn btn-mini-pause" onClick={handlePause}>
-                ⏸ Pause
+              <button className="mini-timer-btn btn-mini-pause" onClick={handlePause} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Pause size={14} /> Pause
               </button>
             ) : (
-              <button className="mini-timer-btn btn-mini-resume" onClick={handleResume}>
-                ▶ Resume
+              <button className="mini-timer-btn btn-mini-resume" onClick={handleResume} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Play size={14} /> Resume
               </button>
             )}
-            <button className="mini-timer-btn btn-mini-end" onClick={() => setShowEndConfirm(true)}>
-              ⏹ End
+            <button className="mini-timer-btn btn-mini-end" onClick={() => setShowEndConfirm(true)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Square size={14} /> End
             </button>
-            <button className="mini-timer-btn btn-mini-expand" onClick={handleExpand}>
-              🖥 Full View
+            <button className="mini-timer-btn btn-mini-expand" onClick={handleExpand} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Maximize2 size={14} /> Full View
             </button>
           </div>
         ) : (

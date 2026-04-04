@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Play, Pause, Square, Flame, Trophy, Sprout, Sun, RotateCcw, CornerUpLeft } from 'lucide-react';
 import { updateSession } from '../utils/api';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/timerStorage';
 
 const STATUS_CONFIG = {
-  peak_focus:      { emoji: '🔥', label: 'Peak Focus',      message: 'You showed serious discipline today. This is CPA-level consistency.' },
-  great_progress:  { emoji: '💪', label: 'Great Progress',  message: "You showed up and pushed forward. That's how passers are made." },
-  getting_started: { emoji: '🌱', label: 'Getting Started', message: 'You started—and that matters. Small steps still move you forward.' },
-  reset_day:       { emoji: '🌼', label: 'Reset Day',       message: 'Rest is part of the process. Tomorrow is another chance to show up.' },
+  peak_focus:      { icon: <Flame size={18} />, label: 'Peak Focus',      message: 'You showed serious discipline today. This is CPA-level consistency.' },
+  great_progress:  { icon: <Trophy size={18} />, label: 'Great Progress',  message: "You showed up and pushed forward. That's how passers are made." },
+  getting_started: { icon: <Sprout size={18} />, label: 'Getting Started', message: 'You started—and that matters. Small steps still move you forward.' },
+  reset_day:       { icon: <Sun size={18} />, label: 'Reset Day',       message: 'Rest is part of the process. Tomorrow is another chance to show up.' },
 };
 
 function computeStatus(totalSeconds) {
@@ -244,8 +245,8 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
           <span className="session-date-label">
             {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </span>
-          <div className={`session-status-badge status-${currentStatus}`}>
-            {statusInfo.emoji} {statusInfo.label}
+          <div className={`session-status-badge status-${currentStatus}`} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {statusInfo.icon} {statusInfo.label}
           </div>
         </div>
 
@@ -259,19 +260,19 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
         <div className="session-controls">
           {!hasStarted && (
             <button className="session-btn btn-start" onClick={handleStart}>
-              <span className="btn-icon">▶</span> Start
+              <span className="btn-icon" style={{ display: 'flex' }}><Play size={16} /></span> Start
             </button>
           )}
 
           {hasStarted && isRunning && (
             <button className="session-btn btn-pause" onClick={handlePause}>
-              <span className="btn-icon">⏸</span> Pause
+              <span className="btn-icon" style={{ display: 'flex' }}><Pause size={16} /></span> Pause
             </button>
           )}
 
           {hasStarted && !isRunning && (
             <button className="session-btn btn-resume" onClick={handleResume}>
-              <span className="btn-icon">🔁</span> Resume
+              <span className="btn-icon" style={{ display: 'flex' }}><RotateCcw size={16} /></span> Resume
             </button>
           )}
 
@@ -280,13 +281,13 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
               className="session-btn btn-end"
               onClick={() => setShowEndConfirm(true)}
             >
-              <span className="btn-icon">⏹</span> End Session
+              <span className="btn-icon" style={{ display: 'flex' }}><Square size={16} /></span> End Session
             </button>
           )}
 
           {hasStarted && onMinimize && (
             <button className="session-btn btn-minimize" onClick={handleMinimize}>
-              <span className="btn-icon">↩</span> Back to Home
+              <span className="btn-icon" style={{ display: 'flex' }}><CornerUpLeft size={16} /></span> Back to Home
             </button>
           )}
         </div>

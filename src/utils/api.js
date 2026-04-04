@@ -98,3 +98,9 @@ export async function setActivePlaylist(id) {
   });
   return res.json();
 }
+
+// Bible Verse API
+export async function fetchBibleVerse() {
+  const res = await fetch(`${API_URL}/verse`);
+  return res.json();
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { X, Play } from 'lucide-react';
 
 export default function PlaylistModal({ playlists, onClose, onSelect, onDelete }) {
   return (
@@ -6,7 +7,9 @@ export default function PlaylistModal({ playlists, onClose, onSelect, onDelete }
       <div className="modal-content yt-playlist-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Your Study Library</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+          <button className="modal-close" onClick={onClose} style={{ display: 'flex' }}>
+            <X size={20} />
+          </button>
         </div>
 
         <div className="modal-body">
@@ -22,7 +25,9 @@ export default function PlaylistModal({ playlists, onClose, onSelect, onDelete }
                     {playlist.thumbnail ? (
                       <img src={playlist.thumbnail} alt="" className="yt-playlist-thumb" />
                     ) : (
-                      <div className="yt-playlist-thumb-placeholder">▶</div>
+                      <div className="yt-playlist-thumb-placeholder">
+                        <Play size={16} />
+                      </div>
                     )}
                     <div className="yt-playlist-info">
                       <span className="yt-playlist-title">{playlist.title}</span>
@@ -39,7 +44,7 @@ export default function PlaylistModal({ playlists, onClose, onSelect, onDelete }
                     onClick={() => onDelete(playlist.id)}
                     title="Remove from library"
                   >
-                    ×
+                    <X size={16} />
                   </button>
                 </div>
               ))}

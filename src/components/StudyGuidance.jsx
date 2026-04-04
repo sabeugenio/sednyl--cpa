@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ArrowRight, ChevronRight, ChevronDown } from 'lucide-react';
 
 const PHASES = [
   { phase: 1, main: 'FAR', mainFull: 'Financial Accounting & Reporting', light: 'RFBT', lightFull: 'Law' },
@@ -48,15 +49,16 @@ export default function StudyGuidance({ currentPhase, onPhaseChange }) {
         <p className="guidance-tip">Use Light subject for low-energy days</p>
       </div>
 
-      <button className="phase-next-btn" onClick={handleNextPhase}>
-        {phaseIndex < 2 ? 'Move to Next Phase →' : 'Back to Phase 1 →'}
+      <button className="phase-next-btn" onClick={handleNextPhase} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+        {phaseIndex < 2 ? 'Move to Next Phase' : 'Back to Phase 1'} <ArrowRight size={16} />
       </button>
 
       <button
         className="low-energy-toggle"
         onClick={() => setShowTip(!showTip)}
+        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
       >
-        {showTip ? '▾' : '▸'} Low energy?
+        {showTip ? <ChevronDown size={14} /> : <ChevronRight size={14} />} Low energy?
       </button>
 
       {showTip && (

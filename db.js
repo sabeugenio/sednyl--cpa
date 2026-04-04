@@ -48,6 +48,13 @@ const initDb = async () => {
         is_active INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS bible_verses (
+        id SERIAL PRIMARY KEY,
+        verse TEXT NOT NULL,
+        reference TEXT NOT NULL,
+        generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     // Run migrations for existing databases
