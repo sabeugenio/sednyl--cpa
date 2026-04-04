@@ -8,6 +8,7 @@ import MiniTimer from './components/MiniTimer';
 import TaskPanel from './components/TaskPanel';
 import WeeklySuccess from './components/WeeklySuccess';
 import StudyGuidance from './components/StudyGuidance';
+import YouTubeWidget from './components/YouTubeWidget';
 import { fetchEntries, fetchEntryByDate, saveEntry, fetchTasks, saveTasks, exportData, importData, fetchSettings, saveSetting } from './utils/api';
 import { loadTimerState, clearTimerState } from './utils/timerStorage';
 
@@ -341,23 +342,26 @@ function App() {
         )}
 
         <div className="main-content">
-          <Calendar
-            year={year}
-            month={month}
-            entries={entries}
-            onDayClick={handleDayClick}
-            onPrev={handlePrevMonth}
-            onNext={handleNextMonth}
-            justSavedDate={justSavedDate}
-            activeSessionDate={activeSessionDate}
-          />
+          <div className="left-column">
+            <Calendar
+              year={year}
+              month={month}
+              entries={entries}
+              onDayClick={handleDayClick}
+              onPrev={handlePrevMonth}
+              onNext={handleNextMonth}
+              justSavedDate={justSavedDate}
+              activeSessionDate={activeSessionDate}
+            />
+            <YouTubeWidget />
+          </div>
 
           <div className="sidebar">
             <StudyGuidance currentPhase={currentPhase} onPhaseChange={handlePhaseChange} />
             <WeeklySuccess entries={entries} />
             <TaskPanel tasks={tasks} onUpdateTask={handleUpdateTask} />
 
-            <div className="data-actions">
+            {/* <div className="data-actions">
               <button className="data-btn" onClick={handleExport}>
                 📥 Export Data
               </button>
@@ -371,9 +375,10 @@ function App() {
                 onChange={handleImport}
                 style={{ display: 'none' }}
               />
-            </div>
+            </div> */}
           </div>
         </div>
+        
       </div>
 
       {/* Session Start Confirmation Modal */}
