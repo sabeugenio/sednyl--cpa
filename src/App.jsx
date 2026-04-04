@@ -6,6 +6,7 @@ import SessionStartModal from './components/SessionStartModal';
 import StudySession from './components/StudySession';
 import MiniTimer from './components/MiniTimer';
 import TaskPanel from './components/TaskPanel';
+import TopicsPanel from './components/TopicsPanel';
 import WeeklySuccess from './components/WeeklySuccess';
 import StudyGuidance from './components/StudyGuidance';
 import YouTubeWidget from './components/YouTubeWidget';
@@ -359,6 +360,7 @@ function App() {
               justSavedDate={justSavedDate}
               activeSessionDate={activeSessionDate}
             />
+            <TopicsPanel />
             <YouTubeWidget />
           </div>
 
@@ -366,6 +368,7 @@ function App() {
             <StudyGuidance currentPhase={currentPhase} onPhaseChange={handlePhaseChange} />
             <WeeklySuccess entries={entries} />
             <TaskPanel tasks={tasks} onUpdateTask={handleUpdateTask} />
+            
 
             {/* <div className="data-actions">
               <button className="data-btn" onClick={handleExport}>

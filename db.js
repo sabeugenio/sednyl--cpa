@@ -55,6 +55,15 @@ const initDb = async () => {
         reference TEXT NOT NULL,
         generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS study_topics (
+        id SERIAL PRIMARY KEY,
+        content TEXT NOT NULL DEFAULT '',
+        completed INTEGER DEFAULT 0,
+        is_done INTEGER DEFAULT 0,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     // Run migrations for existing databases
@@ -63,6 +72,7 @@ const initDb = async () => {
       `ALTER TABLE entries ADD COLUMN IF NOT EXISTS total_time_seconds INTEGER DEFAULT 0`,
       `ALTER TABLE entries ADD COLUMN IF NOT EXISTS is_running INTEGER DEFAULT 0`,
       `ALTER TABLE entries ADD COLUMN IF NOT EXISTS last_start_time TEXT DEFAULT NULL`,
+      `ALTER TABLE study_topics ADD COLUMN IF NOT EXISTS is_done INTEGER DEFAULT 0`,
     ];
 
     for (const sql of migrations) {

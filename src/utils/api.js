@@ -104,3 +104,35 @@ export async function fetchBibleVerse() {
   const res = await fetch(`${API_URL}/verse`);
   return res.json();
 }
+
+// Study Topics API
+export async function fetchTopics(done) {
+  const query = done !== undefined ? `?done=${done}` : '';
+  const res = await fetch(`${API_URL}/topics${query}`);
+  return res.json();
+}
+
+export async function addTopic(content) {
+  const res = await fetch(`${API_URL}/topics`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content }),
+  });
+  return res.json();
+}
+
+export async function updateTopic(id, data) {
+  const res = await fetch(`${API_URL}/topics/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function deleteTopic(id) {
+  const res = await fetch(`${API_URL}/topics/${id}`, {
+    method: 'DELETE',
+  });
+  return res.json();
+}
