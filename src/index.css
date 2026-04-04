@@ -3386,12 +3386,16 @@ body {
   color: #236e3e;
 }
 
-/* ============== HEADER LOGOUT ============== */
-.header-logout-btn {
+/* ============== HEADER PROFILE DROPDOWN ============== */
+.header-profile-dropdown {
   position: absolute;
   top: 50%;
   right: 1.5rem;
   transform: translateY(-50%);
+  z-index: 50;
+}
+
+.header-profile-btn {
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -3407,10 +3411,63 @@ body {
   transition: all var(--transition-base);
 }
 
-.header-logout-btn:hover {
+.header-profile-btn:hover {
   background: var(--bg-hover);
   border-color: var(--border-medium);
   color: var(--text-secondary);
+}
+
+.dropdown-chevron {
+  transition: transform 0.2s ease;
+}
+
+.dropdown-chevron.open {
+  transform: rotate(180deg);
+}
+
+.profile-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 180px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  animation: slideDown 0.2s ease-out forwards;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--transition-base);
+}
+
+.dropdown-item:hover {
+  background: var(--bg-hover);
+}
+
+.dropdown-item.text-danger {
+  color: #d93d3d;
+}
+
+.dropdown-item.text-danger:hover {
+  background: rgba(217, 61, 61, 0.08);
 }
 
 /* ============== AUTH RESPONSIVE ============== */
@@ -3435,13 +3492,16 @@ body {
     font-size: 1.3rem;
   }
 
-  .header-logout-btn span {
+  .profile-btn-text {
     display: none;
   }
 
-  .header-logout-btn {
-    padding: 0.4rem;
+  .header-profile-dropdown {
     right: 1rem;
+  }
+  
+  .header-profile-btn {
+    padding: 0.4rem;
   }
 }
 

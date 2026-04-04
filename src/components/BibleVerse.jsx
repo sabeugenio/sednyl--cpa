@@ -39,9 +39,6 @@ export default function BibleVerse() {
 
   return (
     <div className="bible-verse-card">
-      <div className="bible-verse-icon">
-        <BookOpen size={22} />
-      </div>
       <blockquote className="bible-verse-text">
         "{verse}"
       </blockquote>
