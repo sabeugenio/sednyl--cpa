@@ -38,6 +38,16 @@ const initDb = async () => {
         key TEXT PRIMARY KEY,
         value TEXT DEFAULT ''
       );
+
+      CREATE TABLE IF NOT EXISTS playlists (
+        id SERIAL PRIMARY KEY,
+        video_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        thumbnail TEXT,
+        channel TEXT,
+        is_active INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     // Run migrations for existing databases

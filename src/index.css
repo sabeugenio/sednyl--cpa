@@ -1807,3 +1807,162 @@ body {
   border: 1px dashed var(--border-medium);
   border-radius: var(--radius-md);
 }
+
+/* ============== YOUTUBE PLAYLIST MODAL AND SAVE PROMPT ============== */
+.yt-save-prompt {
+  background: var(--bg-hover);
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-medium);
+}
+
+.yt-save-message {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.yt-save-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.yt-btn-primary {
+  background: var(--color-peak-focus);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.yt-btn-secondary {
+  background: var(--text-primary);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.yt-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-medium);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.yt-btn-primary:hover, .yt-btn-secondary:hover, .yt-btn-ghost:hover {
+  opacity: 0.9;
+}
+
+.yt-playlist-modal {
+  max-width: 500px;
+}
+
+.yt-playlist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.yt-playlist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem;
+  transition: all var(--transition-base);
+}
+
+.active-playlist {
+  border-color: var(--color-peak-focus-border);
+  background: var(--color-peak-focus-bg);
+}
+
+.yt-playlist-play-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.yt-playlist-thumb {
+  width: 80px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.yt-playlist-thumb-placeholder {
+  width: 80px;
+  height: 45px;
+  background: #333;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.yt-playlist-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.yt-playlist-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.yt-playlist-channel {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.yt-playlist-badge {
+  font-size: 0.65rem;
+  color: var(--color-peak-focus);
+  font-weight: 600;
+  margin-top: 0.2rem;
+}
+
+.yt-playlist-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.yt-playlist-delete:hover {
+  background: var(--bg-hover);
+  color: #ff4444;
+}

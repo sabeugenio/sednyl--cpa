@@ -69,3 +69,32 @@ export async function importData(data) {
   });
   return res.json();
 }
+
+// Playlists API
+export async function fetchPlaylists() {
+  const res = await fetch(`${API_URL}/playlists`);
+  return res.json();
+}
+
+export async function savePlaylist(playlist) {
+  const res = await fetch(`${API_URL}/playlists`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(playlist),
+  });
+  return res.json();
+}
+
+export async function deletePlaylist(id) {
+  const res = await fetch(`${API_URL}/playlists/${id}`, {
+    method: 'DELETE',
+  });
+  return res.json();
+}
+
+export async function setActivePlaylist(id) {
+  const res = await fetch(`${API_URL}/playlists/${id}/active`, {
+    method: 'PUT',
+  });
+  return res.json();
+}
