@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from './utils/supabase';
+import AuthPage from './components/AuthPage';
 import Header from './components/Header';
+import Footer from './components/Footer';
 import Calendar from './components/Calendar';
 import DailyEntryModal from './components/DailyEntryModal';
 import SessionStartModal from './components/SessionStartModal';
@@ -30,6 +33,49 @@ const TOAST_MESSAGES = {
 };
 
 function App() {
+  // ── Auth state ──
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    // Listen for changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+  };
+
+  // ── Show auth page or loading ──
+  if (authLoading) {
+    return (
+      <div className="auth-loading">
+        <div className="auth-loading-spinner" />
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <AuthPage />;
+  }
+
+  // ── Authenticated app below ──
+  return <Dashboard session={session} onLogout={handleLogout} />;
+}
+
+function Dashboard({ session, onLogout }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -333,7 +379,7 @@ function App() {
 
   return (
     <>
-      <Header />
+      <Header user={session.user} onLogout={onLogout} />
       <div className="app-layout">
         {/* Mini Timer on home page when session is active but not in full-screen */}
         {activeSession && !showFullTimer && !postSession && (
@@ -442,6 +488,8 @@ function App() {
 
       {/* CPALE Study Chatbot */}
       <Chatbot />
+
+      <Footer />
     </>
   );
 }

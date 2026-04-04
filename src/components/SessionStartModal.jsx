@@ -1,4 +1,5 @@
 import React from 'react';
+import { BookOpen, Play, X } from 'lucide-react';
 
 export default function SessionStartModal({ date, onStart, onClose }) {
   const formatDate = (dateStr) => {
@@ -9,16 +10,16 @@ export default function SessionStartModal({ date, onStart, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="session-start-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="session-start-icon">📚</div>
+        <div className="session-start-icon"><BookOpen size={42} strokeWidth={1.5} /></div>
         <h2 className="session-start-title">Start your review session for today?</h2>
         <p className="session-start-date">{formatDate(date)}</p>
         <p className="session-start-subtitle">Track your study time and build consistency</p>
         <div className="session-start-actions">
           <button className="btn-session-start" onClick={onStart}>
-            ✅ Start Session
+            <Play size={16} /> Start Session
           </button>
           <button className="btn-session-cancel" onClick={onClose}>
-            ❌ Cancel
+            <X size={16} /> Cancel
           </button>
         </div>
       </div>
