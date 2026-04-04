@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Square, Flame, Trophy, Sprout, Sun, RotateCcw, CornerUpLeft } from 'lucide-react';
-import { updateSession } from '../utils/api';
+import { updateSession, API_URL } from '../utils/api';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/timerStorage';
 
 const STATUS_CONFIG = {
@@ -154,7 +154,6 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
       // SessionStorage save is synchronous — guaranteed before unload
       saveTimerState(date, currentTotal, now, true);
       // Also try server save via sendBeacon
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
       const url = `${API_URL}/entries/${date}/session`;
       const body = JSON.stringify({
         total_time_seconds: currentTotal,

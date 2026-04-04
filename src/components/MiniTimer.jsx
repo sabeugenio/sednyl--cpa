@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Square, Maximize2, Flame, Trophy, Sprout, Sun } from 'lucide-react';
-import { updateSession } from '../utils/api';
+import { updateSession, API_URL } from '../utils/api';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/timerStorage';
 
 function formatTime(totalSeconds) {
@@ -123,7 +123,6 @@ export default function MiniTimer({ date, entry, onEnd, onExpand }) {
       const elapsed = Math.floor((now - lastStartRef.current) / 1000);
       const currentTotal = savedTimeRef.current + elapsed;
       saveTimerState(date, currentTotal, now, true);
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
       const url = `${API_URL}/entries/${date}/session`;
       const body = JSON.stringify({
         total_time_seconds: currentTotal,
