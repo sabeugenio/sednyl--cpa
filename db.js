@@ -9,16 +9,20 @@ const pool = new Pool({
 
 const initDb = async () => {
   try {
+    // Create tables if they don't exist (with new schema)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS entries (
         id SERIAL PRIMARY KEY,
         date TEXT UNIQUE NOT NULL,
-        status TEXT NOT NULL CHECK(status IN ('strong', 'showed_up', 'bare_minimum', 'missed')),
+        status TEXT NOT NULL DEFAULT 'reset_day',
         what_i_did TEXT DEFAULT '',
         next_step TEXT DEFAULT '',
         feeling TEXT DEFAULT '',
         thought TEXT DEFAULT '',
         free_write TEXT DEFAULT '',
+        total_time_seconds INTEGER DEFAULT 0,
+        is_running INTEGER DEFAULT 0,
+        last_start_time TEXT DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
@@ -35,6 +39,44 @@ const initDb = async () => {
         value TEXT DEFAULT ''
       );
     `);
+
+    // Run migrations for existing databases
+    // Add new columns if they don't exist
+    const migrations = [
+      `ALTER TABLE entries ADD COLUMN IF NOT EXISTS total_time_seconds INTEGER DEFAULT 0`,
+      `ALTER TABLE entries ADD COLUMN IF NOT EXISTS is_running INTEGER DEFAULT 0`,
+      `ALTER TABLE entries ADD COLUMN IF NOT EXISTS last_start_time TEXT DEFAULT NULL`,
+    ];
+
+    for (const sql of migrations) {
+      try {
+        await pool.query(sql);
+      } catch (err) {
+        // Column might already exist, that's fine
+        if (!err.message.includes('already exists')) {
+          console.warn('Migration warning:', err.message);
+        }
+      }
+    }
+
+    // Drop the old CHECK constraint on status and allow new values
+    // PostgreSQL: drop constraint by name if it exists, then re-add
+    try {
+      await pool.query(`ALTER TABLE entries DROP CONSTRAINT IF EXISTS entries_status_check`);
+    } catch (err) {
+      // Constraint might not exist
+    }
+    try {
+      await pool.query(`
+        ALTER TABLE entries ADD CONSTRAINT entries_status_check 
+        CHECK(status IN ('strong', 'showed_up', 'bare_minimum', 'missed', 'peak_focus', 'great_progress', 'getting_started', 'reset_day'))
+      `);
+    } catch (err) {
+      // Constraint might already exist with the new values
+      if (!err.message.includes('already exists')) {
+        console.warn('Constraint warning:', err.message);
+      }
+    }
 
     // Initialize default phase
     await pool.query(

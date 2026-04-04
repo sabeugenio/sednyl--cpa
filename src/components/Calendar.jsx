@@ -2,7 +2,20 @@ import React, { useMemo } from 'react';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function Calendar({ year, month, entries, onDayClick, onPrev, onNext, justSavedDate }) {
+// Map all status values (legacy + new) to display categories
+function normalizeStatus(status) {
+  if (!status) return null;
+  // New statuses
+  if (['peak_focus', 'great_progress', 'getting_started', 'reset_day'].includes(status)) return status;
+  // Legacy mapping
+  if (status === 'strong') return 'peak_focus';
+  if (status === 'showed_up') return 'great_progress';
+  if (status === 'bare_minimum') return 'getting_started';
+  if (status === 'missed') return 'reset_day';
+  return null;
+}
+
+export default function Calendar({ year, month, entries, onDayClick, onPrev, onNext, justSavedDate, activeSessionDate }) {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
@@ -23,6 +36,8 @@ export default function Calendar({ year, month, entries, onDayClick, onPrev, onN
       const dayOfWeek = new Date(year, month, d).getDay();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       const entry = entries[dateStr];
+      const rawStatus = entry?.status || null;
+      const status = normalizeStatus(rawStatus);
 
       result.push({
         type: 'day',
@@ -31,12 +46,13 @@ export default function Calendar({ year, month, entries, onDayClick, onPrev, onN
         day: d,
         isWeekend,
         isToday: dateStr === todayStr,
-        status: entry?.status || null,
+        status,
+        hasActiveSession: dateStr === activeSessionDate,
       });
     }
 
     return result;
-  }, [year, month, entries, todayStr]);
+  }, [year, month, entries, todayStr, activeSessionDate]);
 
   return (
     <div className="calendar-container">
@@ -61,18 +77,21 @@ export default function Calendar({ year, month, entries, onDayClick, onPrev, onN
           if (item.isToday) classes.push('today');
           if (item.status) classes.push(`status-${item.status}`);
           if (item.date === justSavedDate) classes.push('just-saved');
+          if (item.hasActiveSession) classes.push('active-session');
 
           return (
             <div
               key={item.key}
               className={classes.join(' ')}
-              onClick={() => !item.isWeekend && onDayClick(item.date)}
-              title={item.isWeekend ? 'Rest Day' : item.status || 'Click to log'}
+              onClick={() => onDayClick(item.date)}
+              title={item.status || 'Click to log'}
             >
               <span className="day-number">{item.day}</span>
-              {item.isWeekend && <span className="rest-label">Rest</span>}
-              {!item.isWeekend && item.status && (
+              {item.status && (
                 <span className={`status-dot ${item.status}`} />
+              )}
+              {item.hasActiveSession && (
+                <span className="session-pulse-dot" />
               )}
             </div>
           );
@@ -81,20 +100,20 @@ export default function Calendar({ year, month, entries, onDayClick, onPrev, onN
 
       <div className="calendar-legend">
         <div className="legend-item">
-          <span className="legend-dot" style={{ background: 'var(--color-strong)' }} />
-          <span>⚡ Strong</span>
+          <span className="legend-dot" style={{ background: 'var(--color-peak-focus)' }} />
+          <span>🔥 Peak Focus</span>
         </div>
         <div className="legend-item">
-          <span className="legend-dot" style={{ background: 'var(--color-showed-up)' }} />
-          <span>✅ Showed Up</span>
+          <span className="legend-dot" style={{ background: 'var(--color-great-progress)' }} />
+          <span>💪 Great Progress</span>
         </div>
         <div className="legend-item">
-          <span className="legend-dot" style={{ background: 'var(--color-bare-minimum)' }} />
-          <span>💤 Bare Minimum</span>
+          <span className="legend-dot" style={{ background: 'var(--color-getting-started)' }} />
+          <span>🌱 Getting Started</span>
         </div>
         <div className="legend-item">
-          <span className="legend-dot" style={{ background: 'var(--color-missed)' }} />
-          <span>❌ Missed</span>
+          <span className="legend-dot" style={{ background: 'var(--color-reset-day)' }} />
+          <span>🌼 Reset Day</span>
         </div>
       </div>
     </div>

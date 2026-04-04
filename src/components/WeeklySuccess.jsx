@@ -1,15 +1,20 @@
 import React, { useMemo } from 'react';
 
-const DAY_LABELS = ['M', 'T', 'W', 'T', 'F'];
+const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-const ENCOURAGING_MESSAGES = [
-  "You're on track 🌿",
-  "Nice consistency ✨",
-  "Keep showing up 💙",
-  "One more day to hit your goal 🌱",
-  "Strong week so far 🌟",
-  "You've been showing up 🎯",
-];
+// Normalize legacy status to new status for counting
+function isPositiveStatus(status) {
+  if (!status) return false;
+  // New statuses (anything except reset_day counts as showing up)
+  if (['peak_focus', 'great_progress', 'getting_started'].includes(status)) return true;
+  // Legacy statuses
+  if (['strong', 'showed_up', 'bare_minimum'].includes(status)) return true;
+  return false;
+}
+
+function isStrongStatus(status) {
+  return status === 'peak_focus' || status === 'strong';
+}
 
 export default function WeeklySuccess({ entries }) {
   const { weekDays, message, streak } = useMemo(() => {
@@ -24,44 +29,39 @@ export default function WeeklySuccess({ entries }) {
     let showedUpCount = 0;
     let hasStrong = false;
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
       const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const entry = entries[dateStr];
       const status = entry?.status || null;
 
-      if (status === 'strong') { showedUpCount++; hasStrong = true; }
-      else if (status === 'showed_up') { showedUpCount++; }
-      else if (status === 'bare_minimum') { showedUpCount++; }
+      if (isStrongStatus(status)) { showedUpCount++; hasStrong = true; }
+      else if (isPositiveStatus(status)) { showedUpCount++; }
 
       weekDays.push({ label: DAY_LABELS[i], status, dateStr });
     }
 
-    const isSuccess = showedUpCount >= 3 || hasStrong;
-    const remaining = 3 - showedUpCount;
+    const isSuccess = showedUpCount >= 5 || hasStrong;
+    const remaining = 5 - showedUpCount;
 
     let message;
     if (isSuccess) {
-      message = showedUpCount >= 4 ? "Strong week so far 🌟" : "You're on track 🌿";
+      message = showedUpCount >= 6 ? "Strong week so far 🌟" : "You're on track 🌿";
     } else if (showedUpCount > 0) {
       message = remaining === 1 ? "One more day to hit your goal 🌱" : `${remaining} more days — you've got this 💙`;
     } else {
       message = "A new week starts fresh 🌱";
     }
 
-    // Calculate streak (consecutive days showed up, not including missed)
+    // Calculate streak (consecutive days showed up, not including missed/reset)
     const allDates = Object.keys(entries).sort().reverse();
     let streak = 0;
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     for (const dateStr of allDates) {
       const e = entries[dateStr];
-      const d = new Date(dateStr + 'T00:00:00');
-      const dow = d.getDay();
-      if (dow === 0 || dow === 6) continue; // skip weekends
-      if (e.status === 'missed') break;
-      if (e.status) streak++;
+      if (!isPositiveStatus(e.status)) break;
+      streak++;
     }
 
     return { weekDays, message, streak };
@@ -74,8 +74,8 @@ export default function WeeklySuccess({ entries }) {
       <div className="week-dots">
         {weekDays.map((day, i) => {
           let classes = 'week-dot';
-          if (day.status === 'strong') classes += ' strong-fill';
-          else if (day.status === 'showed_up' || day.status === 'bare_minimum') classes += ' filled';
+          if (isStrongStatus(day.status)) classes += ' strong-fill';
+          else if (isPositiveStatus(day.status)) classes += ' filled';
 
           return (
             <div key={i} className={classes} title={`${day.label}: ${day.status || 'pending'}`}>

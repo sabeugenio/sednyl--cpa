@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 
-const STATUS_OPTIONS = [
-  { value: 'strong', emoji: '⚡', label: 'Strong' },
-  { value: 'showed_up', emoji: '✅', label: 'Showed Up' },
-  { value: 'bare_minimum', emoji: '💤', label: 'Bare Minimum' },
-  { value: 'missed', emoji: '❌', label: 'Missed' },
-];
-
-const FEEDBACK_MESSAGES = {
-  strong: "Amazing deep work session! 🌟",
-  showed_up: "You showed up today ✨",
-  bare_minimum: "That counts. Every bit matters 💙",
-  missed: "Tomorrow is a fresh start 🌱",
+const STATUS_CONFIG = {
+  peak_focus:      { emoji: '🔥', label: 'Peak Focus',      message: 'You showed serious discipline today. This is CPA-level consistency.' },
+  great_progress:  { emoji: '💪', label: 'Great Progress',  message: "You showed up and pushed forward. That's how passers are made." },
+  getting_started: { emoji: '🌱', label: 'Getting Started', message: 'You started—and that matters. Small steps still move you forward.' },
+  reset_day:       { emoji: '🌼', label: 'Reset Day',       message: 'Rest is part of the process. Tomorrow is another chance to show up.' },
 };
 
-export default function DailyEntryModal({ date, existingEntry, onSave, onClose }) {
-  const [status, setStatus] = useState('');
+function formatStudyTime(totalSeconds) {
+  if (!totalSeconds || totalSeconds === 0) return null;
+  const hrs = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = Math.floor(totalSeconds % 60);
+  const parts = [];
+  if (hrs > 0) parts.push(`${hrs}h`);
+  if (mins > 0) parts.push(`${mins}m`);
+  if (secs > 0 && hrs === 0) parts.push(`${secs}s`);
+  return parts.join(' ') || '0s';
+}
+
+export default function DailyEntryModal({ date, existingEntry, onSave, onClose, computedStatus, computedTime, isPostSession, readOnly }) {
   const [whatIDid, setWhatIDid] = useState('');
   const [nextStep, setNextStep] = useState('');
   const [feeling, setFeeling] = useState('');
@@ -23,15 +27,20 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose }
   const [freeWrite, setFreeWrite] = useState('');
   const [showJournal, setShowJournal] = useState(false);
 
+  // The status is either computed from session or loaded from existing entry
+  const status = computedStatus || existingEntry?.status || 'reset_day';
+  const totalTime = computedTime || existingEntry?.total_time_seconds || 0;
+  const statusInfo = STATUS_CONFIG[status] || STATUS_CONFIG['reset_day'];
+
   useEffect(() => {
     if (existingEntry) {
-      setStatus(existingEntry.status || '');
       setWhatIDid(existingEntry.what_i_did || '');
       setNextStep(existingEntry.next_step || '');
       setFeeling(existingEntry.feeling || '');
       setThought(existingEntry.thought || '');
       setFreeWrite(existingEntry.free_write || '');
-      if (existingEntry.feeling || existingEntry.thought || existingEntry.free_write) {
+      // Auto-expand only if existing entry already has data
+      if (existingEntry.what_i_did || existingEntry.next_step || existingEntry.feeling || existingEntry.thought || existingEntry.free_write) {
         setShowJournal(true);
       }
     }
@@ -43,7 +52,6 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose }
   };
 
   const handleSave = () => {
-    if (!status) return;
     onSave({
       date,
       status,
@@ -52,6 +60,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose }
       feeling,
       thought,
       free_write: freeWrite,
+      total_time_seconds: totalTime,
     });
   };
 
@@ -64,59 +73,53 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose }
         </div>
 
         <div className="modal-body">
-          {/* Status Selector */}
-          <div className="status-selector">
-            {STATUS_OPTIONS.map((opt) => (
-              <div
-                key={opt.value}
-                className={`status-option ${status === opt.value ? `selected ${opt.value}` : ''}`}
-                onClick={() => setStatus(opt.value)}
-              >
-                <span className="status-emoji">{opt.emoji}</span>
-                <span className="status-label">{opt.label}</span>
+          {/* Motivational Status & Time Banner */}
+          <div className={`session-result-banner status-banner-${status}`}>
+            <div className="result-status">
+              <span className="result-emoji">{statusInfo.emoji}</span>
+              <span className="result-label">{statusInfo.label}</span>
+            </div>
+            {totalTime > 0 && (
+              <div className="result-time">{formatStudyTime(totalTime)} studied</div>
+            )}
+            <p className="result-message">{statusInfo.message}</p>
+          </div>
+
+            <div className="form-group">
+                <label className="form-label">What I did</label>
+                <input
+                  className="form-input"
+                  type="text"
+                  value={whatIDid}
+                  onChange={(e) => setWhatIDid(e.target.value)}
+                  placeholder="e.g., Reviewed FAR Chapter 3"
+                  readOnly={readOnly}
+                />
               </div>
-            ))}
-          </div>
 
-          {status && (
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-accent)', marginBottom: '1rem', fontStyle: 'italic' }}>
-              {FEEDBACK_MESSAGES[status]}
-            </p>
-          )}
+              <div className="form-group">
+                <label className="form-label">Next step</label>
+                <input
+                  className="form-input"
+                  type="text"
+                  value={nextStep}
+                  onChange={(e) => setNextStep(e.target.value)}
+                  placeholder="e.g., Start practice MCQs"
+                  readOnly={readOnly}
+                />
+              </div>
 
-          {/* Core inputs */}
-          <div className="form-group">
-            <label className="form-label">What I did</label>
-            <input
-              className="form-input"
-              type="text"
-              value={whatIDid}
-              onChange={(e) => setWhatIDid(e.target.value)}
-              placeholder="e.g., Reviewed FAR Chapter 3"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Next step</label>
-            <input
-              className="form-input"
-              type="text"
-              value={nextStep}
-              onChange={(e) => setNextStep(e.target.value)}
-              placeholder="e.g., Start practice MCQs"
-            />
-          </div>
-
-          {/* Journal toggle */}
+          {/* Journal toggle — collapsed by default */}
           <button
             className="journal-toggle"
             onClick={() => setShowJournal(!showJournal)}
           >
-            {showJournal ? '▾' : '▸'} Journal (optional)
+            {showJournal ? '▾' : '▸'} Journal (Optional)
           </button>
 
           {showJournal && (
             <div className="journal-section">
+
               <div className="form-group">
                 <label className="form-label">Today felt</label>
                 <input
@@ -126,6 +129,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose }
                   onChange={(e) => setFeeling(e.target.value)}
                   placeholder="1–3 words"
                   maxLength={50}
+                  readOnly={readOnly}
                 />
               </div>
 
@@ -137,6 +141,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose }
                   value={thought}
                   onChange={(e) => setThought(e.target.value)}
                   placeholder="One short sentence"
+                  readOnly={readOnly}
                 />
               </div>
 
@@ -147,6 +152,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose }
                   value={freeWrite}
                   onChange={(e) => setFreeWrite(e.target.value)}
                   placeholder="Write anything you'd like…"
+                  readOnly={readOnly}
                 />
               </div>
             </div>
@@ -154,15 +160,17 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose }
 
           {/* Actions */}
           <div className="modal-actions">
-            <button className="btn-cancel" onClick={onClose}>Cancel</button>
-            <button
-              className="btn-save"
-              onClick={handleSave}
-              disabled={!status}
-              style={{ opacity: status ? 1 : 0.5 }}
-            >
-              {existingEntry ? 'Update' : 'Save'}
+            <button className="btn-cancel" onClick={onClose}>
+              {readOnly ? 'Close' : 'Cancel'}
             </button>
+            {!readOnly && (
+              <button
+                className="btn-save"
+                onClick={handleSave}
+              >
+                {existingEntry ? 'Update' : 'Save'}
+              </button>
+            )}
           </div>
         </div>
       </div>

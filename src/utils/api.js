@@ -19,6 +19,15 @@ export async function saveEntry(entry) {
   return res.json();
 }
 
+export async function updateSession(date, sessionData) {
+  const res = await fetch(`${API_URL}/entries/${date}/session`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(sessionData),
+  });
+  return res.json();
+}
+
 export async function fetchTasks() {
   const res = await fetch(`${API_URL}/tasks`);
   return res.json();
