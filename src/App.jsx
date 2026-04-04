@@ -10,6 +10,7 @@ import WeeklySuccess from './components/WeeklySuccess';
 import StudyGuidance from './components/StudyGuidance';
 import YouTubeWidget from './components/YouTubeWidget';
 import BibleVerse from './components/BibleVerse';
+import Chatbot from './components/Chatbot';
 import { fetchEntries, fetchEntryByDate, saveEntry, fetchTasks, saveTasks, exportData, importData, fetchSettings, saveSetting } from './utils/api';
 import { loadTimerState, clearTimerState } from './utils/timerStorage';
 
@@ -435,6 +436,9 @@ function App() {
           {toast.text} {toast.icon}
         </div>
       )}
+
+      {/* CPALE Study Chatbot */}
+      <Chatbot />
     </>
   );
 }

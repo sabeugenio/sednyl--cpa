@@ -10,3 +10,4 @@ database.sqlite
 database.sqlite-wal
 database.sqlite-shm
 client_secret.json
+rules

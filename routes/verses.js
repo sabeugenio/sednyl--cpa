@@ -1,23 +1,22 @@
 import express from 'express';
 import OpenAI from 'openai';
+import fs from 'fs/promises';
+import url from 'url';
+import path from 'path';
+
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_KEY,
-});
+let cachedVerse = null;
+let cachedAt = null;
+const CACHE_DURATION_MS = 1 * 60 * 60 * 1000;
 
-// In-memory cache — persists across page reloads, resets only on server restart
-let cachedVerse = null;   // { verse, reference }
-let cachedAt = null;      // Date when the verse was set
-const CACHE_DURATION_MS = 1 * 60 * 60 * 1000; // 1 hour
-
-// GET /api/verse — always returns a verse, changes every 1 hour
 router.get('/verse', async (req, res) => {
   try {
     const now = Date.now();
 
-    // Return cached verse if still within the 1-hour window
     if (cachedVerse && cachedAt && (now - cachedAt) < CACHE_DURATION_MS) {
       return res.json({
         verse: cachedVerse.verse,
@@ -26,9 +25,19 @@ router.get('/verse', async (req, res) => {
       });
     }
 
-    // Time to get a new verse
     let newVerse;
     try {
+      if (!process.env.OPENAI_KEY) {
+        throw new Error('OPENAI_KEY is missing from environment variables');
+      }
+
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_KEY,
+      });
+      
+      const rulesPath = path.join(__dirname, '..', 'rules', 'bible_rules.txt');
+      const systemInstruction = await fs.readFile(rulesPath, 'utf8');
+
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         temperature: 1.0,
@@ -36,11 +45,7 @@ router.get('/verse', async (req, res) => {
         messages: [
           {
             role: 'system',
-            content:
-              'You are a Bible verse assistant. You MUST return ONLY a single Bible verse. ' +
-              'The verse must be encouraging, give wisdom, provide strength, or lift the mood when feeling down. ' +
-              'Return ONLY valid JSON in this exact format: {"verse": "...", "reference": "Book Chapter:Verse"} ' +
-              'Do NOT include any other text, explanation, commentary, or markdown formatting. Just raw JSON.',
+            content: systemInstruction,
           },
           {
             role: 'user',
@@ -60,11 +65,15 @@ router.get('/verse', async (req, res) => {
           throw new Error('Failed to parse OpenAI response');
         }
       }
-    } catch (aiErr) {
-      console.warn('OpenAI unavailable, using fallback verse:', aiErr.message);
+    } catch (apiErr) {
+      console.warn('OpenAI unavailable, using fallback verse:', apiErr.message);
+      // Let's add a safe fallback verse just in case the key is expired or missing.
+      newVerse = {
+        verse: "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world.",
+        reference: "John 16:33"
+      };
     }
 
-    // Cache in memory
     cachedVerse = newVerse;
     cachedAt = now;
 
