@@ -1,9 +1,17 @@
 import pool from '../_db.js';
+import { requireAuth } from '../_auth.js';
 
 export default async function handler(req, res) {
+  let userId;
+  try {
+    userId = await requireAuth(req);
+  } catch (err) {
+    return res.status(401).json({ error: err.message });
+  }
+
   if (req.method === 'GET') {
     try {
-      const { rows } = await pool.query('SELECT * FROM entries ORDER BY date DESC');
+      const { rows } = await pool.query('SELECT * FROM entries WHERE user_id = $1 ORDER BY date DESC', [userId]);
       return res.status(200).json(rows);
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -19,25 +27,25 @@ export default async function handler(req, res) {
       }
 
       await pool.query(`
-        INSERT INTO entries (date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, is_running, last_start_time)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, NULL)
-        ON CONFLICT(date) DO UPDATE SET
-          status = $2,
-          what_i_did = $3,
-          next_step = $4,
-          feeling = $5,
-          thought = $6,
-          free_write = $7,
-          total_time_seconds = $8,
+        INSERT INTO entries (user_id, date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, is_running, last_start_time)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, NULL)
+        ON CONFLICT(user_id, date) DO UPDATE SET
+          status = $3,
+          what_i_did = $4,
+          next_step = $5,
+          feeling = $6,
+          thought = $7,
+          free_write = $8,
+          total_time_seconds = $9,
           is_running = 0,
           last_start_time = NULL,
           updated_at = CURRENT_TIMESTAMP
       `, [
-        date, status, what_i_did || '', next_step || '', feeling || '', thought || '', free_write || '',
+        userId, date, status, what_i_did || '', next_step || '', feeling || '', thought || '', free_write || '',
         total_time_seconds || 0
       ]);
 
-      const { rows } = await pool.query('SELECT * FROM entries WHERE date = $1', [date]);
+      const { rows } = await pool.query('SELECT * FROM entries WHERE user_id = $1 AND date = $2', [userId, date]);
       return res.status(200).json(rows[0]);
     } catch (err) {
       return res.status(500).json({ error: err.message });

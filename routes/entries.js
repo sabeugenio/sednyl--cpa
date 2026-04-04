@@ -1,11 +1,14 @@
 import express from 'express';
-const router = express.Router();
 import pool from '../db.js';
+import { expressAuth } from '../api/_auth.js';
+
+const router = express.Router();
+router.use(expressAuth);
 
 // GET /api/entries - Get all entries
 router.get('/', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM entries ORDER BY date DESC');
+    const { rows } = await pool.query('SELECT * FROM entries WHERE user_id = $1 ORDER BY date DESC', [req.user.id]);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -15,7 +18,7 @@ router.get('/', async (req, res) => {
 // GET /api/entries/:date - Get entry by date
 router.get('/:date', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM entries WHERE date = $1', [req.params.date]);
+    const { rows } = await pool.query('SELECT * FROM entries WHERE user_id = $1 AND date = $2', [req.user.id, req.params.date]);
     res.json(rows[0] || null);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -32,25 +35,25 @@ router.post('/', async (req, res) => {
     }
 
     await pool.query(`
-      INSERT INTO entries (date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, is_running, last_start_time)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, NULL)
-      ON CONFLICT(date) DO UPDATE SET
-        status = $2,
-        what_i_did = $3,
-        next_step = $4,
-        feeling = $5,
-        thought = $6,
-        free_write = $7,
-        total_time_seconds = $8,
+      INSERT INTO entries (user_id, date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, is_running, last_start_time)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, NULL)
+      ON CONFLICT(user_id, date) DO UPDATE SET
+        status = $3,
+        what_i_did = $4,
+        next_step = $5,
+        feeling = $6,
+        thought = $7,
+        free_write = $8,
+        total_time_seconds = $9,
         is_running = 0,
         last_start_time = NULL,
         updated_at = CURRENT_TIMESTAMP
     `, [
-      date, status, what_i_did || '', next_step || '', feeling || '', thought || '', free_write || '',
+      req.user.id, date, status, what_i_did || '', next_step || '', feeling || '', thought || '', free_write || '',
       total_time_seconds || 0
     ]);
 
-    const { rows } = await pool.query('SELECT * FROM entries WHERE date = $1', [date]);
+    const { rows } = await pool.query('SELECT * FROM entries WHERE user_id = $1 AND date = $2', [req.user.id, date]);
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -63,18 +66,17 @@ router.put('/:date/session', async (req, res) => {
     const { date } = req.params;
     const { total_time_seconds, is_running, last_start_time } = req.body;
 
-    // Upsert: create the entry if it doesn't exist, or update session fields
     await pool.query(`
-      INSERT INTO entries (date, status, total_time_seconds, is_running, last_start_time)
-      VALUES ($1, 'reset_day', $2, $3, $4)
-      ON CONFLICT(date) DO UPDATE SET
-        total_time_seconds = $2,
-        is_running = $3,
-        last_start_time = $4,
+      INSERT INTO entries (user_id, date, status, total_time_seconds, is_running, last_start_time)
+      VALUES ($1, $2, 'reset_day', $3, $4, $5)
+      ON CONFLICT(user_id, date) DO UPDATE SET
+        total_time_seconds = $3,
+        is_running = $4,
+        last_start_time = $5,
         updated_at = CURRENT_TIMESTAMP
-    `, [date, total_time_seconds || 0, is_running ? 1 : 0, last_start_time || null]);
+    `, [req.user.id, date, total_time_seconds || 0, is_running ? 1 : 0, last_start_time || null]);
 
-    const { rows } = await pool.query('SELECT * FROM entries WHERE date = $1', [date]);
+    const { rows } = await pool.query('SELECT * FROM entries WHERE user_id = $1 AND date = $2', [req.user.id, date]);
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -88,14 +90,14 @@ router.post('/:date/session', async (req, res) => {
     const { total_time_seconds, is_running, last_start_time } = req.body;
 
     await pool.query(`
-      INSERT INTO entries (date, status, total_time_seconds, is_running, last_start_time)
-      VALUES ($1, 'reset_day', $2, $3, $4)
-      ON CONFLICT(date) DO UPDATE SET
-        total_time_seconds = $2,
-        is_running = $3,
-        last_start_time = $4,
+      INSERT INTO entries (user_id, date, status, total_time_seconds, is_running, last_start_time)
+      VALUES ($1, $2, 'reset_day', $3, $4, $5)
+      ON CONFLICT(user_id, date) DO UPDATE SET
+        total_time_seconds = $3,
+        is_running = $4,
+        last_start_time = $5,
         updated_at = CURRENT_TIMESTAMP
-    `, [date, total_time_seconds || 0, is_running ? 1 : 0, last_start_time || null]);
+    `, [req.user.id, date, total_time_seconds || 0, is_running ? 1 : 0, last_start_time || null]);
 
     res.json({ ok: true });
   } catch (err) {

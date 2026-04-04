@@ -3,11 +3,14 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs/promises';
 import url from 'url';
 import path from 'path';
+import { expressAuth } from '../api/_auth.js';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = Router();
+
+router.use(expressAuth);
 
 router.post('/chat', async (req, res) => {
   try {

@@ -10,6 +10,7 @@ import versesRouter from './routes/verses.js';
 import chatRouter from './routes/chat.js';
 import topicsRouter from './routes/topics.js';
 import pool from './db.js';
+import { expressAuth } from './api/_auth.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -28,11 +29,11 @@ app.use('/api', chatRouter);
 app.use('/api/topics', topicsRouter);
 
 // Export endpoint - download all data as JSON
-app.get('/api/export', async (req, res) => {
+app.get('/api/export', expressAuth, async (req, res) => {
   try {
     const [entriesReq, tasksReq] = await Promise.all([
-      pool.query('SELECT * FROM entries ORDER BY date'),
-      pool.query('SELECT * FROM tasks ORDER BY type, id')
+      pool.query('SELECT * FROM entries WHERE user_id = $1 ORDER BY date', [req.user.id]),
+      pool.query('SELECT * FROM tasks WHERE user_id = $1 ORDER BY type, id', [req.user.id])
     ]);
     res.json({ entries: entriesReq.rows, tasks: tasksReq.rows, exportedAt: new Date().toISOString() });
   } catch (err) {
@@ -41,7 +42,7 @@ app.get('/api/export', async (req, res) => {
 });
 
 // Import endpoint - restore data from JSON
-app.post('/api/import', async (req, res) => {
+app.post('/api/import', expressAuth, async (req, res) => {
   try {
     const { entries, tasks } = req.body;
 
@@ -52,15 +53,15 @@ app.post('/api/import', async (req, res) => {
       if (entries && Array.isArray(entries)) {
         for (const entry of entries) {
           await client.query(`
-            INSERT INTO entries (date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, is_running, last_start_time)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            ON CONFLICT(date) DO UPDATE SET
-              status = $2, what_i_did = $3, next_step = $4,
-              feeling = $5, thought = $6, free_write = $7,
-              total_time_seconds = $8, is_running = $9, last_start_time = $10,
+            INSERT INTO entries (user_id, date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, is_running, last_start_time)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            ON CONFLICT(user_id, date) DO UPDATE SET
+              status = $3, what_i_did = $4, next_step = $5,
+              feeling = $6, thought = $7, free_write = $8,
+              total_time_seconds = $9, is_running = $10, last_start_time = $11,
               updated_at = CURRENT_TIMESTAMP
           `, [
-            entry.date, entry.status, entry.what_i_did || '', entry.next_step || '',
+            req.user.id, entry.date, entry.status, entry.what_i_did || '', entry.next_step || '',
             entry.feeling || '', entry.thought || '', entry.free_write || '',
             entry.total_time_seconds || 0, entry.is_running ? 1 : 0, entry.last_start_time || null
           ]);
@@ -68,11 +69,11 @@ app.post('/api/import', async (req, res) => {
       }
 
       if (tasks && Array.isArray(tasks)) {
-        await client.query('DELETE FROM tasks');
+        await client.query('DELETE FROM tasks WHERE user_id = $1', [req.user.id]);
         for (const task of tasks) {
           await client.query(
-            'INSERT INTO tasks (type, content, completed) VALUES ($1, $2, $3)',
-            [task.type, task.content || '', task.completed ? 1 : 0]
+            'INSERT INTO tasks (user_id, type, content, completed) VALUES ($1, $2, $3, $4)',
+            [req.user.id, task.type, task.content || '', task.completed ? 1 : 0]
           );
         }
       }

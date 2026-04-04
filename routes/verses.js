@@ -3,25 +3,32 @@ import OpenAI from 'openai';
 import fs from 'fs/promises';
 import url from 'url';
 import path from 'path';
+import pool from '../db.js';
+import { expressAuth } from '../api/_auth.js';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
-
-let cachedVerse = null;
-let cachedAt = null;
 const CACHE_DURATION_MS = 1 * 60 * 60 * 1000;
+
+router.use(expressAuth);
 
 router.get('/verse', async (req, res) => {
   try {
-    const now = Date.now();
+    const now = new Date();
 
-    if (cachedVerse && cachedAt && (now - cachedAt) < CACHE_DURATION_MS) {
+    const { rows: recentVerses } = await pool.query(
+      `SELECT * FROM bible_verses WHERE user_id = $1 AND generated_at > NOW() - INTERVAL '1 hour' ORDER BY generated_at DESC LIMIT 1`,
+      [req.user.id]
+    );
+
+    if (recentVerses.length > 0) {
+      const cached = recentVerses[0];
       return res.json({
-        verse: cachedVerse.verse,
-        reference: cachedVerse.reference,
-        expires_at: new Date(cachedAt + CACHE_DURATION_MS),
+        verse: cached.verse,
+        reference: cached.reference,
+        expires_at: new Date(new Date(cached.generated_at).getTime() + CACHE_DURATION_MS),
       });
     }
 
@@ -67,20 +74,21 @@ router.get('/verse', async (req, res) => {
       }
     } catch (apiErr) {
       console.warn('OpenAI unavailable, using fallback verse:', apiErr.message);
-      // Let's add a safe fallback verse just in case the key is expired or missing.
       newVerse = {
         verse: "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world.",
         reference: "John 16:33"
       };
     }
 
-    cachedVerse = newVerse;
-    cachedAt = now;
+    await pool.query(
+      'INSERT INTO bible_verses (user_id, verse, reference) VALUES ($1, $2, $3)',
+      [req.user.id, newVerse.verse, newVerse.reference]
+    );
 
     res.json({
-      verse: cachedVerse.verse,
-      reference: cachedVerse.reference,
-      expires_at: new Date(cachedAt + CACHE_DURATION_MS),
+      verse: newVerse.verse,
+      reference: newVerse.reference,
+      expires_at: new Date(now.getTime() + CACHE_DURATION_MS),
     });
   } catch (err) {
     console.error('Bible verse error:', err);

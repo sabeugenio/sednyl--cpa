@@ -5,6 +5,7 @@ const { Pool } = pg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
 });
 
 const initDb = async () => {
@@ -13,7 +14,8 @@ const initDb = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS entries (
         id SERIAL PRIMARY KEY,
-        date TEXT UNIQUE NOT NULL,
+        user_id UUID REFERENCES auth.users(id) NOT NULL,
+        date TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'reset_day',
         what_i_did TEXT DEFAULT '',
         next_step TEXT DEFAULT '',
@@ -24,23 +26,28 @@ const initDb = async () => {
         is_running INTEGER DEFAULT 0,
         last_start_time TEXT DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, date)
       );
 
       CREATE TABLE IF NOT EXISTS tasks (
         id SERIAL PRIMARY KEY,
+        user_id UUID REFERENCES auth.users(id) NOT NULL,
         type TEXT NOT NULL CHECK(type IN ('today', 'tomorrow')),
         content TEXT DEFAULT '',
         completed INTEGER DEFAULT 0
       );
 
       CREATE TABLE IF NOT EXISTS settings (
-        key TEXT PRIMARY KEY,
-        value TEXT DEFAULT ''
+        user_id UUID REFERENCES auth.users(id) NOT NULL,
+        key TEXT,
+        value TEXT DEFAULT '',
+        PRIMARY KEY (user_id, key)
       );
 
       CREATE TABLE IF NOT EXISTS playlists (
         id SERIAL PRIMARY KEY,
+        user_id UUID REFERENCES auth.users(id) NOT NULL,
         video_id TEXT NOT NULL,
         title TEXT NOT NULL,
         thumbnail TEXT,
@@ -51,6 +58,7 @@ const initDb = async () => {
 
       CREATE TABLE IF NOT EXISTS bible_verses (
         id SERIAL PRIMARY KEY,
+        user_id UUID REFERENCES auth.users(id) NOT NULL,
         verse TEXT NOT NULL,
         reference TEXT NOT NULL,
         generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -58,6 +66,7 @@ const initDb = async () => {
 
       CREATE TABLE IF NOT EXISTS study_topics (
         id SERIAL PRIMARY KEY,
+        user_id UUID REFERENCES auth.users(id) NOT NULL,
         content TEXT NOT NULL DEFAULT '',
         completed INTEGER DEFAULT 0,
         is_done INTEGER DEFAULT 0,
@@ -73,6 +82,12 @@ const initDb = async () => {
       `ALTER TABLE entries ADD COLUMN IF NOT EXISTS is_running INTEGER DEFAULT 0`,
       `ALTER TABLE entries ADD COLUMN IF NOT EXISTS last_start_time TEXT DEFAULT NULL`,
       `ALTER TABLE study_topics ADD COLUMN IF NOT EXISTS is_done INTEGER DEFAULT 0`,
+      `ALTER TABLE entries ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id)`,
+      `ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id)`,
+      `ALTER TABLE settings ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id)`,
+      `ALTER TABLE playlists ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id)`,
+      `ALTER TABLE bible_verses ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id)`,
+      `ALTER TABLE study_topics ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id)`,
     ];
 
     for (const sql of migrations) {
@@ -105,10 +120,20 @@ const initDb = async () => {
       }
     }
 
-    // Initialize default phase
-    await pool.query(
-      "INSERT INTO settings (key, value) VALUES ('current_phase', '1') ON CONFLICT (key) DO NOTHING"
-    );
+    // Update constraints for entries
+    try {
+      await pool.query(`ALTER TABLE entries DROP CONSTRAINT IF EXISTS entries_date_key`);
+    } catch(err) {}
+    try {
+      await pool.query(`ALTER TABLE entries ADD CONSTRAINT entries_user_id_date_key UNIQUE (user_id, date)`);
+    } catch(err) {}
+
+    // Update constraints for settings
+    try {
+      await pool.query(`ALTER TABLE settings DROP CONSTRAINT IF EXISTS settings_pkey`);
+      await pool.query(`ALTER TABLE settings ADD PRIMARY KEY (user_id, key)`);
+    } catch(err) {}
+
     console.log('✅ PostgreSQL database initialized');
   } catch (err) {
     console.error('❌ Database init error:', err);

@@ -1,6 +1,14 @@
 import pool from '../_db.js';
+import { requireAuth } from '../_auth.js';
 
 export default async function handler(req, res) {
+  let userId;
+  try {
+    userId = await requireAuth(req);
+  } catch (err) {
+    return res.status(401).json({ error: err.message });
+  }
+
   const { id } = req.query;
 
   if (req.method === 'PUT') {
@@ -29,8 +37,9 @@ export default async function handler(req, res) {
       }
 
       values.push(id);
+      values.push(userId);
       const { rows } = await pool.query(
-        `UPDATE study_topics SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+        `UPDATE study_topics SET ${updates.join(', ')} WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1} RETURNING *`,
         values
       );
 
@@ -45,7 +54,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'DELETE') {
     try {
-      const result = await pool.query('DELETE FROM study_topics WHERE id = $1', [id]);
+      const result = await pool.query('DELETE FROM study_topics WHERE id = $1 AND user_id = $2', [id, userId]);
       if (result.rowCount === 0) {
         return res.status(404).json({ error: 'Topic not found' });
       }

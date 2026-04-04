@@ -1,11 +1,14 @@
 import express from 'express';
-const router = express.Router();
 import pool from '../db.js';
+import { expressAuth } from '../api/_auth.js';
+
+const router = express.Router();
+router.use(expressAuth);
 
 // GET /api/settings - Get all settings
 router.get('/', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM settings');
+    const { rows } = await pool.query('SELECT * FROM settings WHERE user_id = $1', [req.user.id]);
     const settings = {};
     rows.forEach((r) => { settings[r.key] = r.value; });
     res.json(settings);
@@ -21,11 +24,11 @@ router.post('/', async (req, res) => {
     if (!key) return res.status(400).json({ error: 'key is required' });
 
     await pool.query(`
-      INSERT INTO settings (key, value) VALUES ($1, $2)
-      ON CONFLICT(key) DO UPDATE SET value = $2
-    `, [key, String(value)]);
+      INSERT INTO settings (user_id, key, value) VALUES ($1, $2, $3)
+      ON CONFLICT(user_id, key) DO UPDATE SET value = $3
+    `, [req.user.id, key, String(value)]);
 
-    const { rows } = await pool.query('SELECT * FROM settings');
+    const { rows } = await pool.query('SELECT * FROM settings WHERE user_id = $1', [req.user.id]);
     const settings = {};
     rows.forEach((r) => { settings[r.key] = r.value; });
     res.json(settings);

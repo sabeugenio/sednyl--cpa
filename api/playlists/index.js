@@ -1,9 +1,17 @@
 import pool from '../_db.js';
+import { requireAuth } from '../_auth.js';
 
 export default async function handler(req, res) {
+  let userId;
+  try {
+    userId = await requireAuth(req);
+  } catch (err) {
+    return res.status(401).json({ error: err.message });
+  }
+
   if (req.method === 'GET') {
     try {
-      const { rows } = await pool.query('SELECT * FROM playlists ORDER BY created_at DESC');
+      const { rows } = await pool.query('SELECT * FROM playlists WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
       return res.status(200).json(rows);
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -19,16 +27,16 @@ export default async function handler(req, res) {
       }
 
       // Check if it already exists to avoid duplicates
-      const check = await pool.query('SELECT * FROM playlists WHERE video_id = $1', [video_id]);
+      const check = await pool.query('SELECT * FROM playlists WHERE user_id = $1 AND video_id = $2', [userId, video_id]);
       if (check.rows.length > 0) {
         return res.status(200).json(check.rows[0]);
       }
 
       const { rows } = await pool.query(`
-        INSERT INTO playlists (video_id, title, thumbnail, channel, is_active)
-        VALUES ($1, $2, $3, $4, 0)
+        INSERT INTO playlists (user_id, video_id, title, thumbnail, channel, is_active)
+        VALUES ($1, $2, $3, $4, $5, 0)
         RETURNING *
-      `, [video_id, title, thumbnail || '', channel || '']);
+      `, [userId, video_id, title, thumbnail || '', channel || '']);
 
       return res.status(201).json(rows[0]);
     } catch (err) {

@@ -1,9 +1,17 @@
-import pool from '../_db.js';
+import pool from './_db.js';
+import { requireAuth } from './_auth.js';
 
 export default async function handler(req, res) {
+  let userId;
+  try {
+    userId = await requireAuth(req);
+  } catch (err) {
+    return res.status(401).json({ error: err.message });
+  }
+
   if (req.method === 'GET') {
     try {
-      const { rows } = await pool.query('SELECT * FROM tasks ORDER BY type, id');
+      const { rows } = await pool.query('SELECT * FROM tasks WHERE user_id = $1 ORDER BY type, id', [userId]);
       return res.status(200).json(rows);
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -21,12 +29,12 @@ export default async function handler(req, res) {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
-        await client.query('DELETE FROM tasks');
+        await client.query('DELETE FROM tasks WHERE user_id = $1', [userId]);
 
         for (const task of tasks) {
           await client.query(
-            'INSERT INTO tasks (type, content, completed) VALUES ($1, $2, $3)',
-            [task.type, task.content || '', task.completed ? 1 : 0]
+            'INSERT INTO tasks (user_id, type, content, completed) VALUES ($1, $2, $3, $4)',
+            [userId, task.type, task.content || '', task.completed ? 1 : 0]
           );
         }
 
@@ -38,7 +46,7 @@ export default async function handler(req, res) {
         client.release();
       }
 
-      const { rows } = await pool.query('SELECT * FROM tasks ORDER BY type, id');
+      const { rows } = await pool.query('SELECT * FROM tasks WHERE user_id = $1 ORDER BY type, id', [userId]);
       return res.status(200).json(rows);
     } catch (err) {
       return res.status(500).json({ error: err.message });

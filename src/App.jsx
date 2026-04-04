@@ -86,6 +86,8 @@ function Dashboard({ session, onLogout }) {
   const [currentPhase, setCurrentPhase] = useState('1');
   const importInputRef = useRef(null);
   const taskSaveTimerRef = useRef(null);
+  const tasksRef = useRef(tasks);
+  tasksRef.current = tasks;
 
   // Flow state
   const [showSessionStart, setShowSessionStart] = useState(null);   // date string or null
@@ -307,21 +309,14 @@ function Dashboard({ session, onLogout }) {
       return updated;
     });
 
-    // Debounce save
+    // Debounce save — use tasksRef to always read the latest state
     if (taskSaveTimerRef.current) clearTimeout(taskSaveTimerRef.current);
     taskSaveTimerRef.current = setTimeout(async () => {
       try {
-        const currentTasks = tasks.map((t) =>
-          t.id === updatedTask.id ? updatedTask : t
-        );
-        const tasksToSave = currentTasks
+        const latestTasks = tasksRef.current;
+        const tasksToSave = latestTasks
           .filter((t) => t.content || t.completed)
           .map((t) => ({ type: t.type, content: t.content, completed: t.completed ? 1 : 0 }));
-        if (!currentTasks.find((t) => t.id === updatedTask.id)) {
-          if (updatedTask.content || updatedTask.completed) {
-            tasksToSave.push({ type: updatedTask.type, content: updatedTask.content, completed: updatedTask.completed ? 1 : 0 });
-          }
-        }
         await saveTasks(tasksToSave);
         await loadTasks();
       } catch (err) {

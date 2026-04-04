@@ -1,11 +1,14 @@
 import express from 'express';
-const router = express.Router();
 import pool from '../db.js';
+import { expressAuth } from '../api/_auth.js';
+
+const router = express.Router();
+router.use(expressAuth);
 
 // GET /api/playlists - Get all playlists
 router.get('/', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM playlists ORDER BY created_at DESC');
+    const { rows } = await pool.query('SELECT * FROM playlists WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -22,16 +25,16 @@ router.post('/', async (req, res) => {
     }
 
     // Check if it already exists to avoid duplicates
-    const check = await pool.query('SELECT * FROM playlists WHERE video_id = $1', [video_id]);
+    const check = await pool.query('SELECT * FROM playlists WHERE user_id = $1 AND video_id = $2', [req.user.id, video_id]);
     if (check.rows.length > 0) {
       return res.json(check.rows[0]); // Return existing
     }
 
     const { rows } = await pool.query(`
-      INSERT INTO playlists (video_id, title, thumbnail, channel, is_active)
-      VALUES ($1, $2, $3, $4, 0)
+      INSERT INTO playlists (user_id, video_id, title, thumbnail, channel, is_active)
+      VALUES ($1, $2, $3, $4, $5, 0)
       RETURNING *
-    `, [video_id, title, thumbnail || '', channel || '']);
+    `, [req.user.id, video_id, title, thumbnail || '', channel || '']);
     
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -43,7 +46,7 @@ router.post('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM playlists WHERE id = $1', [id]);
+    await pool.query('DELETE FROM playlists WHERE id = $1 AND user_id = $2', [id, req.user.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -56,10 +59,10 @@ router.put('/:id/active', async (req, res) => {
     const { id } = req.params;
     
     // First, set all to inactive
-    await pool.query('UPDATE playlists SET is_active = 0');
+    await pool.query('UPDATE playlists SET is_active = 0 WHERE user_id = $1', [req.user.id]);
     
     // Then set the chosen one to active
-    const { rows } = await pool.query('UPDATE playlists SET is_active = 1 WHERE id = $1 RETURNING *', [id]);
+    const { rows } = await pool.query('UPDATE playlists SET is_active = 1 WHERE id = $1 AND user_id = $2 RETURNING *', [id, req.user.id]);
     
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Playlist not found' });

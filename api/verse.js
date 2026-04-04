@@ -1,11 +1,19 @@
-import pool from '../_db.js';
+import pool from './_db.js';
 import OpenAI from 'openai';
+import { requireAuth } from './_auth.js';
 
 const BIBLE_RULES = `You are a Bible verse assistant. You MUST return ONLY a single Bible verse. The verse must be encouraging, give wisdom, provide strength, or lift the mood when feeling down. Return ONLY valid JSON in this exact format: {"verse": "...", "reference": "Book Chapter:Verse"} Do NOT include any other text, explanation, commentary, or markdown formatting. Just raw JSON.`;
 
 const CACHE_DURATION_MS = 1 * 60 * 60 * 1000; // 1 hour
 
 export default async function handler(req, res) {
+  let userId;
+  try {
+    userId = await requireAuth(req);
+  } catch (err) {
+    return res.status(401).json({ error: err.message });
+  }
+
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
     return res.status(405).end();
@@ -14,7 +22,8 @@ export default async function handler(req, res) {
   try {
     // Check database for a recent verse (within cache duration)
     const { rows: recentVerses } = await pool.query(
-      `SELECT * FROM bible_verses WHERE generated_at > NOW() - INTERVAL '1 hour' ORDER BY generated_at DESC LIMIT 1`
+      `SELECT * FROM bible_verses WHERE user_id = $1 AND generated_at > NOW() - INTERVAL '1 hour' ORDER BY generated_at DESC LIMIT 1`,
+      [userId]
     );
 
     if (recentVerses.length > 0) {
@@ -66,8 +75,8 @@ export default async function handler(req, res) {
 
     // Save to database for caching
     await pool.query(
-      'INSERT INTO bible_verses (verse, reference) VALUES ($1, $2)',
-      [newVerse.verse, newVerse.reference]
+      'INSERT INTO bible_verses (user_id, verse, reference) VALUES ($1, $2, $3)',
+      [userId, newVerse.verse, newVerse.reference]
     );
 
     return res.status(200).json({
