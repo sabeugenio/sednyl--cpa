@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 export default function Header({ user, onLogout }) {
   const fullName = user?.user_metadata?.full_name || 'CPA Student';
@@ -7,7 +7,6 @@ export default function Header({ user, onLogout }) {
   return (
     <header className="header" style={{ position: 'relative' }}>
       <h1 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-        <GraduationCap size={28} style={{ color: 'var(--primary)' }} />
         {fullName}, CPA
       </h1>
       <p className="subtitle">Consistency over intensity</p>

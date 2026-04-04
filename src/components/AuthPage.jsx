@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../utils/supabase';
-import { GraduationCap, Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
 import Footer from './Footer';
 
 export default function AuthPage() {
@@ -81,10 +81,7 @@ export default function AuthPage() {
       <div className="auth-card">
         {/* Header */}
         <div className="auth-header">
-          <div className="auth-logo">
-            <GraduationCap size={36} />
-          </div>
-          <h1 className="auth-title">CPA Study Tracker</h1>
+          <h1 className="auth-title">My CPA Study Tracker</h1>
           <p className="auth-subtitle">Consistency over intensity</p>
         </div>
 

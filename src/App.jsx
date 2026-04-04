@@ -433,6 +433,8 @@ function Dashboard({ session, onLogout }) {
             </div> */}
           </div>
         </div>
+
+        <Footer />
         
       </div>
 
@@ -488,8 +490,6 @@ function Dashboard({ session, onLogout }) {
 
       {/* CPALE Study Chatbot */}
       <Chatbot />
-
-      <Footer />
     </>
   );
 }
