@@ -9,10 +9,18 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: err.message });
   }
 
-  // Vercel catch-all: req.query.path is an array
-  // /api/entries/2024-01-01 → path = ['2024-01-01']
-  // /api/entries/2024-01-01/session → path = ['2024-01-01', 'session']
-  const pathParts = req.query.path || [];
+  let pathParts = [];
+  if (req.query && req.query.path) {
+    pathParts = Array.isArray(req.query.path) ? req.query.path : req.query.path.split('/');
+  }
+  if (pathParts.length === 0 && req.url) {
+    const urlStr = req.url.split('?')[0];
+    const match = urlStr.match(/\/api\/entries\/(.+)/);
+    if (match) {
+      pathParts = match[1].split('/');
+    }
+  }
+
   const date = pathParts[0];
   const isSession = pathParts[1] === 'session';
 

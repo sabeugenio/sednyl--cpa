@@ -9,8 +9,18 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: err.message });
   }
 
-  // Parse path: /api/playlists/123 or /api/playlists/123/active
-  const pathParts = req.query.path || [];
+  let pathParts = [];
+  if (req.query && req.query.path) {
+    pathParts = Array.isArray(req.query.path) ? req.query.path : req.query.path.split('/');
+  }
+  if (pathParts.length === 0 && req.url) {
+    const urlStr = req.url.split('?')[0];
+    const match = urlStr.match(/\/api\/playlists\/(.+)/);
+    if (match) {
+      pathParts = match[1].split('/');
+    }
+  }
+
   const id = pathParts[0];
   const isActive = pathParts[1] === 'active';
 
