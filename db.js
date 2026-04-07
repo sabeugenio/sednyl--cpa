@@ -101,6 +101,14 @@ const initDb = async () => {
         sort_order INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS study_countdowns (
+        id SERIAL PRIMARY KEY,
+        user_id UUID REFERENCES auth.users(id) NOT NULL,
+        title TEXT NOT NULL,
+        target_date TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     // Run migrations for existing databases

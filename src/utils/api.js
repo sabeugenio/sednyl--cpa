@@ -225,3 +225,30 @@ export async function deleteChecklistItem(id) {
     method: 'DELETE',
   });
 }
+
+// Countdowns API
+export async function fetchCountdowns() {
+  return apiFetch(`/countdowns`);
+}
+
+export async function addCountdown(title, targetDate) {
+  return apiFetch(`/countdowns`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, targetDate }),
+  });
+}
+
+export async function updateCountdown(id, data) {
+  return apiFetch(`/countdowns/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteCountdown(id) {
+  return apiFetch(`/countdowns/${id}`, {
+    method: 'DELETE',
+  });
+}

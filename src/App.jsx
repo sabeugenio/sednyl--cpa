@@ -15,6 +15,7 @@ import StudyGuidance from './components/StudyGuidance';
 import YouTubeWidget from './components/YouTubeWidget';
 import BibleVerse from './components/BibleVerse';
 import Chatbot from './components/Chatbot';
+import CountdownWidget from './components/CountdownWidget';
 import { fetchEntries, fetchEntryByDate, saveEntry, fetchTasks, saveTasks, exportData, importData, fetchSettings, saveSetting } from './utils/api';
 import { loadTimerState, clearTimerState } from './utils/timerStorage';
 
@@ -390,7 +391,11 @@ function Dashboard({ session, onLogout }) {
         <BibleVerse />
 
         <div className="main-content">
-          <div className="left-column">
+          <div className="countdown-column">
+            <CountdownWidget />
+          </div>
+
+          <div className="center-column">
             <Calendar
               year={year}
               month={month}
@@ -409,23 +414,6 @@ function Dashboard({ session, onLogout }) {
             <StudyGuidance currentPhase={currentPhase} onPhaseChange={handlePhaseChange} />
             <WeeklySuccess entries={entries} />
             <TaskPanel tasks={tasks} onUpdateTask={handleUpdateTask} />
-            
-
-            {/* <div className="data-actions">
-              <button className="data-btn" onClick={handleExport}>
-                📥 Export Data
-              </button>
-              <button className="data-btn" onClick={() => importInputRef.current?.click()}>
-                📤 Import Data
-              </button>
-              <input
-                ref={importInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleImport}
-                style={{ display: 'none' }}
-              />
-            </div> */}
           </div>
         </div>
 

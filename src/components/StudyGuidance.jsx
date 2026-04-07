@@ -32,13 +32,13 @@ export default function StudyGuidance({ currentPhase, onPhaseChange }) {
 
       <div className="phase-badge">Phase {phase.phase}</div>
 
-      <div className="subject-row main-subject">
+      <div className={`subject-row main-subject subject-${phase.main.toLowerCase()}`}>
         <span className="subject-type">Main</span>
         <span className="subject-name">{phase.main}</span>
       </div>
       <div className="subject-desc">{phase.mainFull}</div>
 
-      <div className="subject-row light-subject">
+      <div className={`subject-row light-subject subject-${phase.light.toLowerCase()}`}>
         <span className="subject-type">Light</span>
         <span className="subject-name">{phase.light}</span>
       </div>

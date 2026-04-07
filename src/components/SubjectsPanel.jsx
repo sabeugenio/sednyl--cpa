@@ -315,7 +315,7 @@ export default function SubjectsPanel() {
               const subjectTopics = topicsBySubject[subject.id] || [];
 
               return (
-                <div key={subject.id} className="subject-item">
+                <div key={subject.id} className={`subject-item subject-${subject.name.trim().toLowerCase()}`}>
                   <button
                     className="subject-toggle-btn"
                     onClick={() => {
