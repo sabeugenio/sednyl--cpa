@@ -9,7 +9,7 @@ import SessionStartModal from './components/SessionStartModal';
 import StudySession from './components/StudySession';
 import MiniTimer from './components/MiniTimer';
 import TaskPanel from './components/TaskPanel';
-import TopicsPanel from './components/TopicsPanel';
+import SubjectsPanel from './components/SubjectsPanel';
 import WeeklySuccess from './components/WeeklySuccess';
 import StudyGuidance from './components/StudyGuidance';
 import YouTubeWidget from './components/YouTubeWidget';
@@ -401,7 +401,7 @@ function Dashboard({ session, onLogout }) {
               justSavedDate={justSavedDate}
               activeSessionDate={activeSessionDate}
             />
-            <TopicsPanel />
+            <SubjectsPanel />
             <YouTubeWidget />
           </div>
 

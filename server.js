@@ -9,6 +9,7 @@ import playlistsRouter from './routes/playlists.js';
 import versesRouter from './routes/verses.js';
 import chatRouter from './routes/chat.js';
 import topicsRouter from './routes/topics.js';
+import subjectsRouter from './routes/subjects.js';
 import pool from './db.js';
 import { expressAuth } from './api/_auth.js';
 
@@ -24,6 +25,7 @@ app.use('/api/entries', entriesRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/playlists', playlistsRouter);
+app.use('/api/subjects', subjectsRouter);
 app.use('/api', versesRouter);
 app.use('/api', chatRouter);
 app.use('/api/topics', topicsRouter);

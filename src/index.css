@@ -3555,3 +3555,382 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 3px 10px rgba(45, 138, 78, 0.12);
 }
+
+/* ============== SUBJECTS PANEL ============== */
+.subjects-panel {
+  /* Extends topics-panel styles */
+}
+
+.subject-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+  position: relative;
+  background: var(--bg-hover);
+  margin-bottom: 0.5rem;
+}
+
+.subject-item:hover {
+  background: rgba(45, 138, 78, 0.06);
+}
+
+.subject-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.subject-toggle-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.subject-name {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.subject-topic-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--color-peak-focus-bg);
+  color: var(--color-peak-focus);
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.subject-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.subject-item:hover .subject-delete-btn {
+  opacity: 1;
+}
+
+.subject-delete-btn:hover {
+  background: rgba(220, 60, 60, 0.1);
+  color: #dc3c3c;
+}
+
+.subject-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+
+.subject-add-input {
+  flex: 1;
+  border: 1.5px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.65rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  outline: none;
+  transition: border-color var(--transition-base);
+}
+
+.subject-add-input:focus {
+  border-color: var(--color-peak-focus);
+}
+
+.subject-add-input::placeholder {
+  color: var(--text-muted);
+}
+
+.subject-add-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: linear-gradient(135deg, var(--color-peak-focus), var(--color-great-progress));
+  color: white;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-base);
+}
+
+.subject-add-confirm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(45, 138, 78, 0.3);
+}
+
+/* Nested topics list under each subject */
+.topics-nested-list {
+  margin-left: 1.5rem;
+  margin-top: 0.5rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.topic-item.nested {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+  position: relative;
+}
+
+.topic-item.nested:hover {
+  background: var(--bg-hover);
+}
+
+.topic-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.topic-toggle-btn:hover {
+  background: var(--bg-secondary);
+}
+
+.checklist-progress {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  padding: 0.15rem 0.4rem;
+  background: var(--color-great-progress-bg);
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+/* Checklist items */
+.checklist-items {
+  margin-left: 1.5rem;
+  margin-top: 0.35rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+}
+
+.checklist-item:hover {
+  background: var(--bg-hover);
+}
+
+.checklist-checkbox {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--border-medium);
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-base);
+  position: relative;
+}
+
+.checklist-checkbox:checked {
+  background: var(--color-great-progress);
+  border-color: var(--color-great-progress);
+}
+
+.checklist-checkbox:checked::after {
+  content: '✓';
+  color: white;
+  font-size: 9px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.checklist-checkbox:hover {
+  border-color: var(--color-great-progress);
+}
+
+.checklist-text {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.checklist-text.completed {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.checklist-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.checklist-item:hover .checklist-delete-btn {
+  opacity: 1;
+}
+
+.checklist-delete-btn:hover {
+  background: rgba(220, 60, 60, 0.1);
+  color: #dc3c3c;
+}
+
+.checklist-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.25rem;
+}
+
+.checklist-add-input {
+  flex: 1;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  outline: none;
+  transition: border-color var(--transition-base);
+}
+
+.checklist-add-input:focus {
+  border-color: var(--color-peak-focus);
+}
+
+.checklist-add-input::placeholder {
+  color: var(--text-muted);
+}
+
+.checklist-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: linear-gradient(135deg, var(--color-peak-focus), var(--color-great-progress));
+  color: white;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-base);
+}
+
+.checklist-add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 4px rgba(45, 138, 78, 0.2);
+}
+
+.checklist-add-btn-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 400;
+  font-family: inherit;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  margin-left: 1.5rem;
+  margin-top: 0.2rem;
+}
+
+.checklist-add-btn-link:hover {
+  color: var(--color-peak-focus);
+}
+
+/* Completed topics modal organization by subject */
+.completed-subjects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.completed-subject-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.completed-subject-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 0.65rem;
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+}
+
+.completed-topics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}

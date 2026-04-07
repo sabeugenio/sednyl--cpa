@@ -4,7 +4,7 @@ export const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '
 
 async function apiFetch(endpoint, options = {}) {
   const headers = { ...options.headers };
-  
+
   const { data } = await supabase.auth.getSession();
   if (data?.session?.access_token) {
     headers['Authorization'] = `Bearer ${data.session.access_token}`;
@@ -14,7 +14,7 @@ async function apiFetch(endpoint, options = {}) {
     ...options,
     headers
   });
-  
+
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({}));
     throw new Error(errorBody.error || `API error: ${res.status}`);
@@ -137,6 +137,91 @@ export async function updateTopic(id, data) {
 
 export async function deleteTopic(id) {
   return apiFetch(`/topics/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// Study Subjects API
+export async function fetchSubjects() {
+  return apiFetch(`/subjects`);
+}
+
+export async function addSubject(name) {
+  return apiFetch(`/subjects`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function updateSubject(id, data) {
+  return apiFetch(`/subjects/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteSubject(id) {
+  return apiFetch(`/subjects/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// Subject Topics API
+export async function fetchSubjectTopics(subjectId, completed) {
+  let query = `?subjectId=${subjectId}`;
+  if (completed !== undefined) {
+    query += `&completed=${completed}`;
+  }
+  return apiFetch(`/subjects/topics${query}`);
+}
+
+export async function addSubjectTopic(subjectId, title) {
+  return apiFetch(`/subjects/topics`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subjectId, title }),
+  });
+}
+
+export async function updateSubjectTopic(id, data) {
+  return apiFetch(`/subjects/topics/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteSubjectTopic(id) {
+  return apiFetch(`/subjects/topics/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// Topic Checklist Items API
+export async function fetchChecklistItems(topicId) {
+  return apiFetch(`/subjects/checklists?topicId=${topicId}`);
+}
+
+export async function addChecklistItem(topicId, content) {
+  return apiFetch(`/subjects/checklists`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ topicId, content }),
+  });
+}
+
+export async function updateChecklistItem(id, data) {
+  return apiFetch(`/subjects/checklists/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteChecklistItem(id) {
+  return apiFetch(`/subjects/checklists/${id}`, {
     method: 'DELETE',
   });
 }

@@ -73,6 +73,34 @@ const initDb = async () => {
         sort_order INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS study_subjects (
+        id SERIAL PRIMARY KEY,
+        user_id UUID REFERENCES auth.users(id) NOT NULL,
+        name TEXT NOT NULL,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS study_subject_topics (
+        id SERIAL PRIMARY KEY,
+        user_id UUID REFERENCES auth.users(id) NOT NULL,
+        subject_id INTEGER REFERENCES study_subjects(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        completed INTEGER DEFAULT 0,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS study_topic_checklist_items (
+        id SERIAL PRIMARY KEY,
+        user_id UUID REFERENCES auth.users(id) NOT NULL,
+        topic_id INTEGER REFERENCES study_subject_topics(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        completed INTEGER DEFAULT 0,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     // Run migrations for existing databases
@@ -123,16 +151,16 @@ const initDb = async () => {
     // Update constraints for entries
     try {
       await pool.query(`ALTER TABLE entries DROP CONSTRAINT IF EXISTS entries_date_key`);
-    } catch(err) {}
+    } catch (err) { }
     try {
       await pool.query(`ALTER TABLE entries ADD CONSTRAINT entries_user_id_date_key UNIQUE (user_id, date)`);
-    } catch(err) {}
+    } catch (err) { }
 
     // Update constraints for settings
     try {
       await pool.query(`ALTER TABLE settings DROP CONSTRAINT IF EXISTS settings_pkey`);
       await pool.query(`ALTER TABLE settings ADD PRIMARY KEY (user_id, key)`);
-    } catch(err) {}
+    } catch (err) { }
 
     console.log('✅ PostgreSQL database initialized');
   } catch (err) {
@@ -143,3 +171,5 @@ const initDb = async () => {
 initDb();
 
 export default pool;
+
+// Add new subject-based tables to migrations (appended to migrations array)
