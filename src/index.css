@@ -62,6 +62,7 @@
   --text-secondary: var(--text-slate);
   --text-muted: #8a8a8a;
   --border-light: #eaddcb;
+  --border-medium: #d1c6b8;
   --accent-color: var(--brand-green);
   --success-color: var(--focus-green);
 
