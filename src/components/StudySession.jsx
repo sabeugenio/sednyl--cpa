@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Square, Flame, Trophy, Sprout, Sun, RotateCcw, CornerUpLeft } from 'lucide-react';
 import { updateSession, API_URL } from '../utils/api';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/timerStorage';
+import TaskPanel from './TaskPanel';
 
 const STATUS_CONFIG = {
   peak_focus:      { icon: <Flame size={18} />, label: 'Peak Focus',      message: 'You showed serious discipline today. This is CPA-level consistency.' },
@@ -24,7 +25,7 @@ function formatTime(totalSeconds) {
   return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
-export default function StudySession({ date, existingEntry, onEndSession, onMinimize }) {
+export default function StudySession({ date, existingEntry, onEndSession, onMinimize, tasks, onUpdateTask }) {
   const [totalTime, setTotalTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -290,6 +291,13 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
             </button>
           )}
         </div>
+
+        {/* Inline Task Panel */}
+        {tasks && onUpdateTask && (
+          <div className="session-task-panel">
+            <TaskPanel tasks={tasks} onUpdateTask={onUpdateTask} compact />
+          </div>
+        )}
 
         {/* End Session Confirmation */}
         {showEndConfirm && (

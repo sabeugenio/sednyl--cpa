@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { normalizeStatus } from '../utils/statusUtils';
+import { CheckCircle2, Circle } from 'lucide-react';
 
 const STATUS_CONFIG = {
   peak_focus:      { emoji: '🔥', label: 'Peak Focus',      message: 'You showed serious discipline today. This is CPA-level consistency.' },
@@ -28,9 +30,13 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
   const [showJournal, setShowJournal] = useState(false);
 
   // The status is either computed from session or loaded from existing entry
-  const status = computedStatus || existingEntry?.status || 'reset_day';
+  const rawStatus = computedStatus || existingEntry?.status || 'reset_day';
+  const status = normalizeStatus(rawStatus) || 'reset_day';
   const totalTime = computedTime || existingEntry?.total_time_seconds || 0;
   const statusInfo = STATUS_CONFIG[status] || STATUS_CONFIG['reset_day'];
+
+  const completedTasks = existingEntry?.completed_tasks || 0;
+  const incompleteTasks = existingEntry?.incomplete_tasks || 0;
 
   useEffect(() => {
     if (existingEntry) {
@@ -79,9 +85,28 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
               <span className="result-emoji">{statusInfo.emoji}</span>
               <span className="result-label">{statusInfo.label}</span>
             </div>
-            {totalTime > 0 && (
-              <div className="result-time">{formatStudyTime(totalTime)} studied</div>
-            )}
+            
+            <div className="result-stats-row">
+              {totalTime > 0 && (
+                <div className="result-stat-item">
+                  <span className="stat-value">{formatStudyTime(totalTime)}</span>
+                  <span className="stat-label">Studied</span>
+                </div>
+              )}
+              {(completedTasks > 0 || incompleteTasks > 0) && (
+                <>
+                  <div className="result-stat-item">
+                    <span className="stat-value">{completedTasks}</span>
+                    <span className="stat-label">Tasks Done</span>
+                  </div>
+                  <div className="result-stat-item">
+                    <span className="stat-value">{incompleteTasks}</span>
+                    <span className="stat-label">Pending</span>
+                  </div>
+                </>
+              )}
+            </div>
+            
             <p className="result-message">{statusInfo.message}</p>
           </div>
 

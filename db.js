@@ -23,6 +23,8 @@ const initDb = async () => {
         thought TEXT DEFAULT '',
         free_write TEXT DEFAULT '',
         total_time_seconds INTEGER DEFAULT 0,
+        completed_tasks INTEGER DEFAULT 0,
+        incomplete_tasks INTEGER DEFAULT 0,
         is_running INTEGER DEFAULT 0,
         last_start_time TEXT DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -124,6 +126,8 @@ const initDb = async () => {
       `ALTER TABLE playlists ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id)`,
       `ALTER TABLE bible_verses ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id)`,
       `ALTER TABLE study_topics ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id)`,
+      `ALTER TABLE entries ADD COLUMN IF NOT EXISTS completed_tasks INTEGER DEFAULT 0`,
+      `ALTER TABLE entries ADD COLUMN IF NOT EXISTS incomplete_tasks INTEGER DEFAULT 0`,
     ];
 
     for (const sql of migrations) {

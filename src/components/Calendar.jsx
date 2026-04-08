@@ -1,19 +1,8 @@
 import React, { useMemo } from 'react';
+import { normalizeStatus } from '../utils/statusUtils';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-// Map all status values (legacy + new) to display categories
-function normalizeStatus(status) {
-  if (!status) return null;
-  // New statuses
-  if (['peak_focus', 'great_progress', 'getting_started', 'reset_day'].includes(status)) return status;
-  // Legacy mapping
-  if (status === 'strong') return 'peak_focus';
-  if (status === 'showed_up') return 'great_progress';
-  if (status === 'bare_minimum') return 'getting_started';
-  if (status === 'missed') return 'reset_day';
-  return null;
-}
 
 export default function Calendar({ year, month, entries, onDayClick, onPrev, onNext, justSavedDate, activeSessionDate }) {
   const today = new Date();

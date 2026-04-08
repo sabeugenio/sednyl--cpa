@@ -28,15 +28,15 @@ router.get('/:date', async (req, res) => {
 // POST /api/entries - Upsert entry (full save including journal)
 router.post('/', async (req, res) => {
   try {
-    const { date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds } = req.body;
+    const { date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, completed_tasks, incomplete_tasks } = req.body;
 
     if (!date || !status) {
       return res.status(400).json({ error: 'date and status are required' });
     }
 
     await pool.query(`
-      INSERT INTO entries (user_id, date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, is_running, last_start_time)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, NULL)
+      INSERT INTO entries (user_id, date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, completed_tasks, incomplete_tasks, is_running, last_start_time)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 0, NULL)
       ON CONFLICT(user_id, date) DO UPDATE SET
         status = $3,
         what_i_did = $4,
@@ -45,12 +45,14 @@ router.post('/', async (req, res) => {
         thought = $7,
         free_write = $8,
         total_time_seconds = $9,
+        completed_tasks = $10,
+        incomplete_tasks = $11,
         is_running = 0,
         last_start_time = NULL,
         updated_at = CURRENT_TIMESTAMP
     `, [
       req.user.id, date, status, what_i_did || '', next_step || '', feeling || '', thought || '', free_write || '',
-      total_time_seconds || 0
+      total_time_seconds || 0, completed_tasks || 0, incomplete_tasks || 0
     ]);
 
     const { rows } = await pool.query('SELECT * FROM entries WHERE user_id = $1 AND date = $2', [req.user.id, date]);

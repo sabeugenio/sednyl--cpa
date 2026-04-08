@@ -16,7 +16,7 @@ import YouTubeWidget from './components/YouTubeWidget';
 import BibleVerse from './components/BibleVerse';
 import Chatbot from './components/Chatbot';
 import CountdownWidget from './components/CountdownWidget';
-import { fetchEntries, fetchEntryByDate, saveEntry, fetchTasks, saveTasks, exportData, importData, fetchSettings, saveSetting } from './utils/api';
+import { fetchEntries, fetchEntryByDate, saveEntry, fetchTasks, saveTasks, exportData, importData, fetchSettings, saveSetting, carryoverTasks } from './utils/api';
 import { loadTimerState, clearTimerState } from './utils/timerStorage';
 
 import { Flame, Trophy, Sprout, Sun } from 'lucide-react';
@@ -129,11 +129,21 @@ function Dashboard({ session, onLogout }) {
     }
   }, []);
 
+  // Run carryover on load, then load tasks
+  const runCarryoverAndLoadTasks = useCallback(async () => {
+    try {
+      await carryoverTasks();
+    } catch (err) {
+      console.error('Carryover failed (may be first run):', err);
+    }
+    await loadTasks();
+  }, [loadTasks]);
+
   useEffect(() => {
     loadEntries();
-    loadTasks();
+    runCarryoverAndLoadTasks();
     loadSettings();
-  }, [loadEntries, loadTasks, loadSettings]);
+  }, [loadEntries, runCarryoverAndLoadTasks, loadSettings]);
 
   // Check for active session on load (persistence across reloads)
   useEffect(() => {
@@ -195,10 +205,18 @@ function Dashboard({ session, onLogout }) {
     const todayStr = getTodayStr();
 
     if (date === todayStr) {
+      // Calculate current task counts
+      const todayTasks = tasks.filter(t => t.type === 'today' && t.content);
+      const completedCount = todayTasks.filter(t => t.completed).length;
+      const incompleteCount = todayTasks.filter(t => !t.completed).length;
+
       // If there's already an active mini timer, go to full-screen
       if (activeSession) {
         const entry = await fetchEntryByDate(date).catch(() => activeSession.entry);
-        setActiveSession({ date, entry });
+        setActiveSession({ 
+          date, 
+          entry: entry ? { ...entry, completed_tasks: completedCount, incomplete_tasks: incompleteCount } : null 
+        });
         setShowFullTimer(true);
         return;
       }
@@ -260,7 +278,17 @@ function Dashboard({ session, onLogout }) {
       // No entry
     }
 
-    setPostSession({ date, entry, status, totalTime });
+    // Calculate current task counts
+    const todayTasks = tasks.filter(t => t.type === 'today' && t.content);
+    const completedCount = todayTasks.filter(t => t.completed).length;
+    const incompleteCount = todayTasks.filter(t => !t.completed).length;
+
+    setPostSession({ 
+      date, 
+      entry: entry ? { ...entry, completed_tasks: completedCount, incomplete_tasks: incompleteCount } : { completed_tasks: completedCount, incomplete_tasks: incompleteCount }, 
+      status, 
+      totalTime 
+    });
   };
 
   // Minimize: go from full-screen timer back to home page with mini timer
@@ -413,7 +441,9 @@ function Dashboard({ session, onLogout }) {
           <div className="sidebar">
             <StudyGuidance currentPhase={currentPhase} onPhaseChange={handlePhaseChange} />
             <WeeklySuccess entries={entries} />
-            <TaskPanel tasks={tasks} onUpdateTask={handleUpdateTask} />
+            {activeSession && (
+              <TaskPanel tasks={tasks} onUpdateTask={handleUpdateTask} />
+            )}
           </div>
         </div>
 
@@ -438,6 +468,8 @@ function Dashboard({ session, onLogout }) {
           existingEntry={activeSession.entry}
           onEndSession={handleEndSession}
           onMinimize={handleMinimize}
+          tasks={tasks}
+          onUpdateTask={handleUpdateTask}
         />
       )}
 
