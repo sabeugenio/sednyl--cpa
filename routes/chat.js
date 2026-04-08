@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs/promises';
 import url from 'url';
 import path from 'path';
-import { expressAuth } from '../api/_auth.js';
+import { expressAuth } from '../auth.js';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,8 +30,7 @@ router.post('/chat', async (req, res) => {
     const systemInstruction = await fs.readFile(rulesPath, 'utf8');
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-flash-latest',
-      systemInstruction: systemInstruction,
+      model: 'gemini-pro',
     });
 
     // Remap messages to Gemini history format, except the last message which is the prompt
@@ -42,7 +41,13 @@ router.post('/chat', async (req, res) => {
       parts: [{ text: m.content }],
     }));
 
-    const lastMessage = messages[messages.length - 1].content;
+    let lastMessage = messages[messages.length - 1].content;
+
+    if (history.length === 0) {
+      lastMessage = `System Rules:\n${systemInstruction}\n\nUser request:\n${lastMessage}`;
+    } else {
+      history[0].parts[0].text = `System Rules:\n${systemInstruction}\n\nUser message:\n${history[0].parts[0].text}`;
+    }
 
     const chat = model.startChat({
       history,

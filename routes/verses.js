@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import url from 'url';
 import path from 'path';
 import pool from '../db.js';
-import { expressAuth } from '../api/_auth.js';
+import { expressAuth } from '../auth.js';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,18 +19,24 @@ router.get('/verse', async (req, res) => {
     const now = new Date();
 
     const { rows: recentVerses } = await pool.query(
-      `SELECT * FROM bible_verses WHERE user_id = $1 AND generated_at > NOW() - INTERVAL '1 hour' ORDER BY generated_at DESC LIMIT 1`,
+      `SELECT id FROM bible_verses WHERE user_id = $1 AND generated_at > NOW() - INTERVAL '1 hour' LIMIT 1`,
       [req.user.id]
     );
 
     if (recentVerses.length > 0) {
-      const cached = recentVerses[0];
-      return res.json({
-        verse: cached.verse,
-        reference: cached.reference,
-        expires_at: new Date(new Date(cached.generated_at).getTime() + CACHE_DURATION_MS),
-      });
+      const { rows: randomVerses } = await pool.query(
+         `SELECT * FROM bible_verses WHERE user_id = $1 ORDER BY RANDOM() LIMIT 1`,
+         [req.user.id]
+      );
+      if (randomVerses.length > 0) {
+        return res.json({
+          verse: randomVerses[0].verse,
+          reference: randomVerses[0].reference,
+          expires_at: new Date(now.getTime() + CACHE_DURATION_MS),
+        });
+      }
     }
+
 
     let newVerse;
     try {

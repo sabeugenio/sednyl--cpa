@@ -1,6 +1,6 @@
 import express from 'express';
 import pool from '../db.js';
-import { expressAuth } from '../api/_auth.js';
+import { expressAuth } from '../auth.js';
 
 const router = express.Router();
 router.use(expressAuth);

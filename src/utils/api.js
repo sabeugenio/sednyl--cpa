@@ -252,3 +252,12 @@ export async function deleteCountdown(id) {
     method: 'DELETE',
   });
 }
+
+// Chat functions
+export async function sendChatMessage(messages) {
+  return apiFetch('/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages })
+  });
+}

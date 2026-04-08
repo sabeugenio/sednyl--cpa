@@ -12,7 +12,7 @@ import topicsRouter from './routes/topics.js';
 import subjectsRouter from './routes/subjects.js';
 import countdownsRouter from './routes/countdowns.js';
 import pool from './db.js';
-import { expressAuth } from './api/_auth.js';
+import { expressAuth } from './auth.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -96,6 +96,10 @@ app.post('/api/import', expressAuth, async (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 CPA Tracker API running on http://localhost:${PORT}`);
-});
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 CPA Tracker API running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Sparkles, BookOpen } from 'lucide-react';
-import { API_URL } from '../utils/api';
+import { API_URL, sendChatMessage } from '../utils/api';
 
 const GREETING_MESSAGE = {
   role: 'assistant',
@@ -63,15 +63,9 @@ function Chatbot() {
         .filter(m => m.content !== GREETING_MESSAGE.content)
         .map(m => ({ role: m.role, content: m.content }));
 
-      const res = await fetch(`${API_URL}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages }),
-      });
+      const data = await sendChatMessage(apiMessages);
 
-      const data = await res.json();
-
-      if (!res.ok) {
+      if (data.error) {
         throw new Error(data.error || 'Failed to get response from server');
       }
 
