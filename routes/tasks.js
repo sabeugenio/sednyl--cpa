@@ -55,6 +55,7 @@ router.post('/', async (req, res) => {
 router.post('/carryover', async (req, res) => {
   try {
     const client = await pool.connect();
+    let skipped = false;
     try {
       await client.query('BEGIN');
 
@@ -67,35 +68,38 @@ router.post('/carryover', async (req, res) => {
 
       if (settingsRows.length > 0 && settingsRows[0].value === today) {
         await client.query('COMMIT');
-        client.release();
-        return res.json({ message: 'Carryover already ran today', skipped: true });
+        skipped = true;
+      } else {
+        // 1) Delete completed 'today' tasks (they're done, clear them out)
+        await client.query(
+          `DELETE FROM tasks WHERE user_id = $1 AND type = 'today' AND completed = 1`,
+          [req.user.id]
+        );
+
+        // 2) Promote 'tomorrow' tasks → 'today' (uncheck them)
+        await client.query(
+          `UPDATE tasks SET type = 'today', completed = 0 WHERE user_id = $1 AND type = 'tomorrow'`,
+          [req.user.id]
+        );
+
+        // 3) Mark carryover as done for today
+        await client.query(
+          `INSERT INTO settings (user_id, key, value) VALUES ($1, 'last_carryover_date', $2)
+           ON CONFLICT(user_id, key) DO UPDATE SET value = $2`,
+          [req.user.id, today]
+        );
+
+        await client.query('COMMIT');
       }
-
-      // 1) Delete completed 'today' tasks (they're done, clear them out)
-      await client.query(
-        `DELETE FROM tasks WHERE user_id = $1 AND type = 'today' AND completed = 1`,
-        [req.user.id]
-      );
-
-      // 2) Promote 'tomorrow' tasks → 'today' (uncheck them)
-      await client.query(
-        `UPDATE tasks SET type = 'today', completed = 0 WHERE user_id = $1 AND type = 'tomorrow'`,
-        [req.user.id]
-      );
-
-      // 3) Mark carryover as done for today
-      await client.query(
-        `INSERT INTO settings (user_id, key, value) VALUES ($1, 'last_carryover_date', $2)
-         ON CONFLICT(user_id, key) DO UPDATE SET value = $2`,
-        [req.user.id, today]
-      );
-
-      await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
     } finally {
       client.release();
+    }
+
+    if (skipped) {
+      return res.json({ message: 'Carryover already ran today', skipped: true });
     }
 
     // Return the updated task list

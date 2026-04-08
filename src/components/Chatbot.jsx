@@ -65,10 +65,6 @@ function Chatbot() {
 
       const data = await sendChatMessage(apiMessages);
 
-      if (data.error) {
-        throw new Error(data.error || 'Failed to get response from server');
-      }
-
       if (data.reply) {
         const assistantMessage = { role: 'assistant', content: data.reply };
         setMessages(prev => [...prev, assistantMessage]);
@@ -80,7 +76,7 @@ function Chatbot() {
         ...prev,
         {
           role: 'assistant',
-          content: "I'm having trouble connecting right now. But don't worry — you're doing great! Try again in a moment. 🙏💚",
+          content: "I'm taking a short break right now 🍵💤 Both of my brain engines are resting. Please try again in a few minutes — I'll be back to help you crush those CPALE topics! 🙏✨",
         },
       ]);
     } finally {
