@@ -67,7 +67,11 @@ export default function Calendar({ year, month, entries, countdowns = [], onDayC
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       const entry = entries[dateStr];
       const rawStatus = entry?.status || null;
-      const status = normalizeStatus(rawStatus);
+      let status = normalizeStatus(rawStatus);
+      // Don't show "reset day" badge for today by default.
+      if (dateStr === todayStr && status === 'reset_day') {
+        status = null;
+      }
       const countdownColors = countdownMarksByDate[dateStr] || [];
 
       result.push({
