@@ -163,6 +163,24 @@ export default function YouTubeWidget() {
     loadPlaylists();
   };
 
+  const handleVideoEnd = async () => {
+    setIsPlaying(false);
+    
+    // Automatically play the next video in the saved playlists library
+    if (playlists.length > 0) {
+      const currentIndex = playlists.findIndex(p => p.video_id === activeVideoId);
+      if (currentIndex !== -1) {
+        const nextIndex = (currentIndex + 1) % playlists.length;
+        const nextPlaylist = playlists[nextIndex];
+        
+        setActiveVideoId(nextPlaylist.video_id);
+        setAutoplay(1);
+        await setActivePlaylist(nextPlaylist.id);
+        loadPlaylists();
+      }
+    }
+  };
+
   const handleClosePlayer = () => {
     setActiveVideoId(null);
   };
@@ -301,7 +319,7 @@ export default function YouTubeWidget() {
               }}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
-              onEnd={() => setIsPlaying(false)}
+              onEnd={handleVideoEnd}
             />
           </div>
           <button 
