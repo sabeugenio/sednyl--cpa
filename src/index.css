@@ -4252,7 +4252,7 @@ body {
 
 .item-card.is-past .days-val {
   text-decoration: line-through;
-  text-decoration-thickness: 2px;
+  text-decoration-thickness: 6px;
   color: var(--text-slate);
 }
 
