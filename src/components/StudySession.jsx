@@ -25,7 +25,7 @@ function formatTime(totalSeconds) {
   return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
-export default function StudySession({ date, existingEntry, onEndSession, onMinimize, tasks, onUpdateTask, onDeleteTask }) {
+export default function StudySession({ date, existingEntry, onEndSession, onMinimize, tasks, onUpdateTask, onDeleteTask, onDeleteTaskList }) {
   const [totalTime, setTotalTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -300,6 +300,7 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
               tasks={tasks} 
               onUpdateTask={onUpdateTask} 
               onDeleteTask={onDeleteTask}
+              onDeleteTaskList={onDeleteTaskList}
               compact 
             />
           </div>

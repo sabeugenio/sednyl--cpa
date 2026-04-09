@@ -312,13 +312,34 @@ function Dashboard({ session, onLogout }) {
   // Save entry (post-session journal save)
   const handleSaveEntry = async (entryData) => {
     try {
-      // Snapshot today's tasks
-      const todayTasks = tasksRef.current
-        .filter((t) => t.type === 'today' && t.content)
-        .map(t => ({ content: t.content, completed: t.completed }));
-      const tasksJson = JSON.stringify(todayTasks);
+      const tasksJson =
+        typeof entryData?.tasks_json === 'string'
+          ? entryData.tasks_json
+          : JSON.stringify(
+              tasksRef.current
+                .filter((t) => t.type === 'today' && t.content)
+                .map((t) => ({ content: t.content, completed: t.completed }))
+            );
 
-      await saveEntry({ ...entryData, tasks_json: tasksJson });
+      let parsedTasksForCounts = [];
+      try {
+        parsedTasksForCounts = JSON.parse(tasksJson);
+      } catch {
+        parsedTasksForCounts = [];
+      }
+      const completedTasks = Array.isArray(parsedTasksForCounts)
+        ? parsedTasksForCounts.filter((t) => t?.completed).length
+        : 0;
+      const incompleteTasks = Array.isArray(parsedTasksForCounts)
+        ? parsedTasksForCounts.filter((t) => t && !t.completed).length
+        : 0;
+
+      await saveEntry({
+        ...entryData,
+        tasks_json: tasksJson,
+        completed_tasks: entryData?.completed_tasks ?? completedTasks,
+        incomplete_tasks: entryData?.incomplete_tasks ?? incompleteTasks,
+      });
       
       // Clear today's tasks after successful save
       const remainingTasks = tasksRef.current.filter((t) => t.type !== 'today');
@@ -389,6 +410,24 @@ function Dashboard({ session, onLogout }) {
         await loadTasks();
       } catch (err) {
         console.error('Failed to save tasks after deletion:', err);
+      }
+    }, 1000);
+  };
+
+  const handleDeleteTaskList = (type) => {
+    setTasks((prev) => prev.filter((t) => t.type !== type));
+
+    if (taskSaveTimerRef.current) clearTimeout(taskSaveTimerRef.current);
+    taskSaveTimerRef.current = setTimeout(async () => {
+      try {
+        const latestTasks = tasksRef.current;
+        const tasksToSave = latestTasks
+          .filter((t) => t.content || t.completed)
+          .map((t) => ({ type: t.type, content: t.content, completed: t.completed ? 1 : 0 }));
+        await saveTasks(tasksToSave);
+        await loadTasks();
+      } catch (err) {
+        console.error('Failed to save tasks after list deletion:', err);
       }
     }, 1000);
   };
@@ -485,6 +524,7 @@ function Dashboard({ session, onLogout }) {
               tasks={tasks} 
               onUpdateTask={handleUpdateTask} 
               onDeleteTask={handleDeleteTask}
+              onDeleteTaskList={handleDeleteTaskList}
             />
           </div>
         </div>
@@ -513,6 +553,7 @@ function Dashboard({ session, onLogout }) {
           tasks={tasks}
           onUpdateTask={handleUpdateTask}
           onDeleteTask={handleDeleteTask}
+            onDeleteTaskList={handleDeleteTaskList}
         />
       )}
 

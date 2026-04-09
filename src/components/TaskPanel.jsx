@@ -1,7 +1,7 @@
 import React from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 
-export default function TaskPanel({ tasks, onUpdateTask, onDeleteTask, compact }) {
+export default function TaskPanel({ tasks, onUpdateTask, onDeleteTask, onDeleteTaskList, compact }) {
   const todayTasks = tasks.filter((t) => t.type === 'today');
   const tomorrowTasks = tasks.filter((t) => t.type === 'tomorrow');
 
@@ -45,13 +45,13 @@ export default function TaskPanel({ tasks, onUpdateTask, onDeleteTask, compact }
                 autoFocus={task.isNew && i > 0}
               />
             </div>
-            {task.id && !task.id.startsWith('empty-') && (
+            {task.id != null && !String(task.id).startsWith('empty-') && (
               <button 
                 className="task-delete-btn" 
                 onClick={() => onDeleteTask(task.id)}
                 title="Delete task"
               >
-                <Trash2 size={13} />
+                <X size={14} />
               </button>
             )}
           </div>
@@ -85,13 +85,13 @@ export default function TaskPanel({ tasks, onUpdateTask, onDeleteTask, compact }
                   autoFocus={task.isNew}
                 />
               </div>
-              {task.id && !task.id.startsWith('empty-') && (
+              {task.id != null && !String(task.id).startsWith('empty-') && (
                 <button 
                   className="task-delete-btn" 
                   onClick={() => onDeleteTask(task.id)}
                   title="Delete task"
                 >
-                  <Trash2 size={13} />
+                  <X size={14} />
                 </button>
               )}
             </div>

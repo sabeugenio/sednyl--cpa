@@ -762,7 +762,6 @@ body {
   font-size: 0.7rem;
   font-weight: 500;
   color: var(--text-muted);
-  margin-bottom: 0.4rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -770,8 +769,42 @@ body {
 .task-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   padding: 0.35rem 0;
+  position: relative;
+}
+
+.task-item-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.task-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.task-item:hover .task-delete-btn {
+  opacity: 1;
+}
+
+.task-delete-btn:hover {
+  background: rgba(220, 60, 60, 0.1);
+  color: #dc3c3c;
 }
 
 .task-checkbox {
@@ -4695,6 +4728,33 @@ body {
   border-radius: var(--radius-sm);
   border: 1px solid rgba(0,0,0,0.03);
   transition: all var(--transition-smooth);
+  position: relative;
+}
+
+.task-history-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--transition-base);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.task-history-item:hover .task-history-delete-btn {
+  opacity: 1;
+}
+
+.task-history-delete-btn:hover {
+  background: rgba(220, 60, 60, 0.1);
+  color: #dc3c3c;
 }
 
 .task-history-item.finished {
@@ -4724,41 +4784,3 @@ body {
   opacity: 0.8;
 }
 
-.task-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.25rem 0;
-  group; /* For hover effects */
-}
-
-.task-item-main {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-}
-
-.task-delete-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: all var(--transition-smooth);
-}
-
-.task-item:hover .task-delete-btn {
-  opacity: 1;
-}
-
-.task-delete-btn:hover {
-  background: rgba(230, 57, 70, 0.1);
-  color: var(--reg-color);
-}

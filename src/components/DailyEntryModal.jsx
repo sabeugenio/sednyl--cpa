@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { normalizeStatus } from '../utils/statusUtils';
-import { CheckCircle2, Circle } from 'lucide-react';
+import { CheckCircle2, Circle, X } from 'lucide-react';
 
 const STATUS_CONFIG = {
   peak_focus:      { emoji: '🔥', label: 'Peak Focus',      message: 'You showed serious discipline today. This is CPA-level consistency.' },
@@ -39,14 +39,19 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
   const incompleteTasksCount = existingEntry?.incomplete_tasks || 0;
 
   // Task history list from snapshot
-  let taskHistory = [];
-  try {
-    if (existingEntry?.tasks_json) {
-      taskHistory = JSON.parse(existingEntry.tasks_json);
+  const initialTaskHistory = useMemo(() => {
+    let parsed = [];
+    try {
+      if (existingEntry?.tasks_json) {
+        parsed = JSON.parse(existingEntry.tasks_json);
+      }
+    } catch (err) {
+      console.error('Failed to parse task history:', err);
     }
-  } catch (err) {
-    console.error('Failed to parse task history:', err);
-  }
+    return Array.isArray(parsed) ? parsed : [];
+  }, [existingEntry?.tasks_json]);
+
+  const [taskHistory, setTaskHistory] = useState([]);
 
   useEffect(() => {
     if (existingEntry) {
@@ -55,12 +60,17 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
       setFeeling(existingEntry.feeling || '');
       setThought(existingEntry.thought || '');
       setFreeWrite(existingEntry.free_write || '');
+      setTaskHistory(initialTaskHistory);
       // Auto-expand journal only if it has data
       if (existingEntry.feeling || existingEntry.thought || existingEntry.free_write) {
         setShowJournal(true);
       }
     }
-  }, [existingEntry]);
+  }, [existingEntry, initialTaskHistory]);
+
+  const handleDeleteHistoryTask = (indexToDelete) => {
+    setTaskHistory((prev) => prev.filter((_, idx) => idx !== indexToDelete));
+  };
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr + 'T00:00:00');
@@ -68,6 +78,8 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
   };
 
   const handleSave = () => {
+    const completedCount = taskHistory.filter((t) => t?.completed).length;
+    const incompleteCount = taskHistory.filter((t) => t && !t.completed).length;
     onSave({
       date,
       status,
@@ -77,6 +89,13 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
       thought,
       free_write: freeWrite,
       total_time_seconds: totalTime,
+      ...(isPostSession
+        ? {
+            tasks_json: JSON.stringify(taskHistory),
+            completed_tasks: completedCount,
+            incomplete_tasks: incompleteCount,
+          }
+        : {}),
     });
   };
 
@@ -153,12 +172,25 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                   <div className="task-history-group">
                     <label className="form-label text-success">List of finished task</label>
                     <div className="task-history-list">
-                      {taskHistory.filter(t => t.completed).map((task, i) => (
-                        <div key={i} className="task-history-item finished">
+                      {taskHistory
+                        .map((task, idx) => ({ task, idx }))
+                        .filter(({ task }) => task?.completed)
+                        .map(({ task, idx }) => (
+                        <div key={idx} className="task-history-item finished">
                           <CheckCircle2 size={14} className="task-done-icon" />
                           <span className="task-history-content completed">
                             {task.content}
                           </span>
+                          {!readOnly && (
+                            <button
+                              className="task-history-delete-btn"
+                              onClick={() => handleDeleteHistoryTask(idx)}
+                              title="Delete task"
+                              type="button"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -169,12 +201,25 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                   <div className="task-history-group">
                     <label className="form-label text-pending">List of not finished task</label>
                     <div className="task-history-list">
-                      {taskHistory.filter(t => !t.completed).map((task, i) => (
-                        <div key={i} className="task-history-item">
+                      {taskHistory
+                        .map((task, idx) => ({ task, idx }))
+                        .filter(({ task }) => task && !task.completed)
+                        .map(({ task, idx }) => (
+                        <div key={idx} className="task-history-item">
                           <Circle size={14} className="task-todo-icon" />
                           <span className="task-history-content">
                             {task.content}
                           </span>
+                          {!readOnly && (
+                            <button
+                              className="task-history-delete-btn"
+                              onClick={() => handleDeleteHistoryTask(idx)}
+                              title="Delete task"
+                              type="button"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -243,7 +288,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                 className="btn-save"
                 onClick={handleSave}
               >
-                {existingEntry ? 'Update' : 'Save'}
+                {isPostSession ? 'End Session' : existingEntry ? 'Update' : 'Save'}
               </button>
             )}
           </div>
