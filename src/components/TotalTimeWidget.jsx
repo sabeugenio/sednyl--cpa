@@ -14,7 +14,8 @@ export default function TotalTimeWidget({ entries }) {
     return null; // or a loading/empty state if preferred
   }
 
-  const hours = Math.floor(totalSeconds / 3600);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
 
   return (
@@ -26,15 +27,17 @@ export default function TotalTimeWidget({ entries }) {
       <div className="total-time-body">
         <div className="time-display">
           <div className="time-group">
+            <span className="time-val">{days}</span>
+            <span className="time-label">DAYS</span>
+          </div>
+          <div className="time-group">
             <span className="time-val">{hours}</span>
             <span className="time-label">HR</span>
           </div>
-          {minutes > 0 && (
-            <div className="time-group">
-              <span className="time-val">{minutes}</span>
-              <span className="time-label">MIN</span>
-            </div>
-          )}
+          <div className="time-group">
+            <span className="time-val">{minutes}</span>
+            <span className="time-label">MIN</span>
+          </div>
         </div>
       </div>
     </div>
