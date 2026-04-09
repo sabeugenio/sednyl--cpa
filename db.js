@@ -111,6 +111,8 @@ const initDb = async () => {
         user_id UUID REFERENCES auth.users(id) NOT NULL,
         title TEXT NOT NULL,
         target_date TEXT NOT NULL,
+        start_date TEXT DEFAULT NULL,
+        end_date TEXT DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -132,6 +134,8 @@ const initDb = async () => {
       `ALTER TABLE entries ADD COLUMN IF NOT EXISTS incomplete_tasks INTEGER DEFAULT 0`,
       `ALTER TABLE entries ADD COLUMN IF NOT EXISTS tasks_json TEXT DEFAULT '[]'`,
       `ALTER TABLE bible_verses ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0`,
+      `ALTER TABLE study_countdowns ADD COLUMN IF NOT EXISTS start_date TEXT DEFAULT NULL`,
+      `ALTER TABLE study_countdowns ADD COLUMN IF NOT EXISTS end_date TEXT DEFAULT NULL`,
     ];
 
     for (const sql of migrations) {
