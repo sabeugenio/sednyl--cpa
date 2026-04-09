@@ -117,7 +117,7 @@ export async function setActivePlaylist(id) {
 
 // Bible Verse API
 export async function fetchBibleVerse() {
-  return apiFetch(`/verse`);
+  return apiFetch(`/verse`, { cache: 'no-store' });
 }
 
 // Study Topics API

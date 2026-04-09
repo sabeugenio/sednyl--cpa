@@ -16,6 +16,7 @@ import YouTubeWidget from './components/YouTubeWidget';
 import BibleVerse from './components/BibleVerse';
 import Chatbot from './components/Chatbot';
 import CountdownWidget from './components/CountdownWidget';
+import TotalTimeWidget from './components/TotalTimeWidget';
 import { fetchEntries, fetchEntryByDate, saveEntry, fetchTasks, saveTasks, exportData, importData, fetchSettings, saveSetting, carryoverTasks } from './utils/api';
 import { loadTimerState, clearTimerState } from './utils/timerStorage';
 
@@ -439,6 +440,7 @@ function Dashboard({ session, onLogout }) {
           </div>
 
           <div className="sidebar">
+            <TotalTimeWidget entries={entries} />
             <StudyGuidance currentPhase={currentPhase} onPhaseChange={handlePhaseChange} />
             <WeeklySuccess entries={entries} />
             {activeSession && (

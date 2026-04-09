@@ -11,7 +11,10 @@ export default function BibleVerse() {
 
   const loadVerse = async () => {
     try {
+      console.log('[BibleVerse] Fetching new verse...');
       const data = await fetchBibleVerse();
+      console.log('[BibleVerse] Received:', data);
+      
       if (data.verse) {
         setVerse(data.verse);
         setReference(data.reference);

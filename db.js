@@ -176,34 +176,7 @@ const initDb = async () => {
       await pool.query(`ALTER TABLE settings ADD PRIMARY KEY (user_id, key)`);
     } catch (err) { }
 
-    // Force insert Isaiah 40:31 as the immediate current verse for all users
-    try {
-      // First, get all users who have interacted with settings (to avoid touching empty users unnecessarily)
-      const { rows: users } = await pool.query('SELECT DISTINCT user_id FROM settings');
-      const { rows: nowRows } = await pool.query(`SELECT NOW()::text AS db_now`);
-      
-      for (const u of users) {
-        // Shift existing verses
-        await pool.query('UPDATE bible_verses SET sort_order = sort_order + 1 WHERE user_id = $1', [u.user_id]);
-        
-        // Insert new verse at index 0
-        await pool.query(
-          `INSERT INTO bible_verses (user_id, verse, reference, sort_order) VALUES ($1, $2, $3, 0)`,
-          [u.user_id, "But those who hope in the LORD will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint.", "Isaiah 40:31"]
-        );
-
-        // Reset settings to display the new verse immediately
-        const upsertSql = `
-          INSERT INTO settings (user_id, key, value) VALUES ($1, $2, $3)
-          ON CONFLICT(user_id, key) DO UPDATE SET value = $3
-        `;
-        await pool.query(upsertSql, [u.user_id, 'verse_index', '0']);
-        await pool.query(upsertSql, [u.user_id, 'verse_rotated_at', nowRows[0].db_now]);
-      }
-    } catch(e) {
-      console.warn("Could not insert forced Bible verse:", e.message);
-    }
-
+    // No longer forcing the verse on restart
     console.log('✅ PostgreSQL database initialized');
   } catch (err) {
     console.error('❌ Database init error:', err);

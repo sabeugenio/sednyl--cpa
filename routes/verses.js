@@ -10,13 +10,17 @@ const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
-const CYCLE_HOURS = 3;
+const CYCLE_MINUTES = 120; // 2 hour rotation cycle
 const VERSE_POOL_SIZE = 25;
 
 router.use(expressAuth);
 
 // Seed 25 Bible verses using GPT
 async function seedVerses(userId) {
+  console.log(`[Verse API] Seeding fresh verses for user ${userId}...`);
+  // Clear existing verses first to avoid duplicates
+  await pool.query('DELETE FROM bible_verses WHERE user_id = $1', [userId]);
+
   const openai = new OpenAI({ apiKey: process.env.OPENAI_KEY });
 
   const rulesPath = path.join(__dirname, '..', 'rules', 'bible_rules.txt');
@@ -34,7 +38,10 @@ async function seedVerses(userId) {
       },
       {
         role: 'user',
-        content: `Give me ${VERSE_POOL_SIZE} different random encouraging Bible verses. Make them diverse — about strength, perseverance, peace, wisdom, hope, comfort, joy, and faith. Return as JSON: {"verses": [{"verse": "...", "reference": "Book Chapter:Verse"}, ...]}`,
+        content: `Give me ${VERSE_POOL_SIZE} unique and different encouraging Bible verses. 
+        IMPORTANT: Use many different books (Psalms, Proverbs, Isaiah, Gospels, Epistles, etc). 
+        Do NOT repeat any verses. Make them about strength, perseverance, peace, wisdom, hope, comfort, joy, and faith.
+        Return as JSON: {"verses": [{"verse": "...", "reference": "Book Chapter:Verse"}, ...]}`,
       },
     ],
   });
@@ -63,8 +70,8 @@ router.get('/verse', async (req, res) => {
     );
     const verseCount = parseInt(countRows[0].cnt);
 
-    // If no verses yet, seed them
-    if (verseCount === 0) {
+    // If not enough verses, or none yet, seed them
+    if (verseCount < VERSE_POOL_SIZE) {
       try {
         if (!process.env.OPENAI_KEY) {
           throw new Error('OPENAI_KEY is missing');
@@ -83,13 +90,13 @@ router.get('/verse', async (req, res) => {
     // Check when the last verse rotation happened using DATABASE time
     const { rows: timeCheck } = await pool.query(
       `SELECT value,
-              EXTRACT(EPOCH FROM (NOW() - value::timestamp)) / 3600 AS hours_ago
+              EXTRACT(EPOCH FROM (NOW() - value::timestamptz)) / 60 AS minutes_ago
        FROM settings
        WHERE user_id = $1 AND key = 'verse_rotated_at'`,
       [req.user.id]
     );
 
-    const hoursAgo = timeCheck.length > 0 ? parseFloat(timeCheck[0].hours_ago) : null;
+    const minutesAgo = timeCheck.length > 0 ? parseFloat(timeCheck[0].minutes_ago) : null;
 
     // Get current verse index
     const { rows: indexRows } = await pool.query(
@@ -98,8 +105,10 @@ router.get('/verse', async (req, res) => {
     );
     let currentIndex = indexRows.length > 0 ? parseInt(indexRows[0].value) : 0;
 
-    // If 3 hours have passed (or first time), rotate to next verse
-    if (hoursAgo === null || hoursAgo >= CYCLE_HOURS) {
+    // If 2 hours has passed (or first time), rotate to next verse
+    let hasRotated = false;
+    if (minutesAgo === null || minutesAgo >= (CYCLE_MINUTES - 0.1)) {
+      hasRotated = true;
       // Get total verse count for wrapping
       const { rows: totalRows } = await pool.query(
         'SELECT COUNT(*) AS cnt FROM bible_verses WHERE user_id = $1',
@@ -108,33 +117,41 @@ router.get('/verse', async (req, res) => {
       const total = parseInt(totalRows[0].cnt);
 
       // Move to next verse (or start at 0 if first time)
-      currentIndex = hoursAgo === null ? 0 : (currentIndex + 1) % total;
+      currentIndex = (minutesAgo === null) ? 0 : (currentIndex + 1) % total;
 
       // Update index and rotation time using DB time
       const upsertSql = `
         INSERT INTO settings (user_id, key, value) VALUES ($1, $2, $3)
         ON CONFLICT(user_id, key) DO UPDATE SET value = $3
       `;
-      const { rows: nowRows } = await pool.query(`SELECT NOW()::text AS db_now`);
       await pool.query(upsertSql, [req.user.id, 'verse_index', String(currentIndex)]);
-      await pool.query(upsertSql, [req.user.id, 'verse_rotated_at', nowRows[0].db_now]);
+
+      const upsertTimeSql = `
+        INSERT INTO settings (user_id, key, value) VALUES ($1, $2, CURRENT_TIMESTAMP::text)
+        ON CONFLICT(user_id, key) DO UPDATE SET value = CURRENT_TIMESTAMP::text
+      `;
+      await pool.query(upsertTimeSql, [req.user.id, 'verse_rotated_at']);
     }
 
-    // Fetch the current verse by sort_order
+    // Fetch the current verse by sort_order with deterministic fallback
     const { rows: verseRows } = await pool.query(
-      `SELECT verse, reference FROM bible_verses
+      `SELECT id, verse, reference FROM bible_verses
        WHERE user_id = $1
-       ORDER BY sort_order
+       ORDER BY sort_order ASC, id ASC
        LIMIT 1 OFFSET $2`,
-      [req.user.id, currentIndex]
+      [req.user.id, currentIndex % Math.max(1, verseCount)]
     );
 
     if (verseRows.length > 0) {
-      const remaining = hoursAgo !== null ? Math.max(0, CYCLE_HOURS - hoursAgo) : CYCLE_HOURS;
+      // If we just rotated, minutes_remaining should be the full cycle
+      const effectiveMinutesAgo = hasRotated ? 0 : (minutesAgo || 0);
+      const remainingMinutes = Math.max(0, CYCLE_MINUTES - effectiveMinutesAgo);
+
       return res.json({
         verse: verseRows[0].verse,
         reference: verseRows[0].reference,
-        hours_remaining: remaining.toFixed(1),
+        minutes_remaining: remainingMinutes.toFixed(1),
+        current_index: currentIndex, // For debugging
       });
     }
 

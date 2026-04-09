@@ -257,7 +257,8 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
           {isRunning && <div className="timer-pulse" />}
         </div>
 
-        <div className="session-controls">
+        {!showEndConfirm && (
+          <div className="session-controls">
           {!hasStarted && (
             <button className="session-btn btn-start" onClick={handleStart}>
               <span className="btn-icon" style={{ display: 'flex' }}><Play size={16} /></span> Start
@@ -291,9 +292,9 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
             </button>
           )}
         </div>
-
+        )}
         {/* Inline Task Panel */}
-        {tasks && onUpdateTask && (
+        {!showEndConfirm && tasks && onUpdateTask && (
           <div className="session-task-panel">
             <TaskPanel tasks={tasks} onUpdateTask={onUpdateTask} compact />
           </div>

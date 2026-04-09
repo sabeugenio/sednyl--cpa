@@ -476,11 +476,11 @@ body {
 }
 
 .mini-timer-time {
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-family: 'Inter', 'Inter Fallback', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 1.65rem;
-  font-weight: 500;
+  font-weight: 800;
   color: var(--color-peak-focus);
-  letter-spacing: 0.03em;
+  letter-spacing: -0.04em;
   line-height: 1;
 }
 
@@ -570,9 +570,11 @@ body {
 }
 
 .btn-mini-expand:hover {
-  transform: translateY(-1px);
-  color: gray;
-  box-shadow: 0 2px 8px rgba(45, 138, 78, 0.25);
+  background: linear-gradient(135deg, var(--color-peak-focus), var(--color-great-progress));
+  color: white;
+  transform: translateY(-2px);
+  filter: brightness(1.12);
+  box-shadow: 0 4px 15px rgba(45, 138, 78, 0.35);
 }
 
 .mini-timer-confirm {
@@ -609,6 +611,64 @@ body {
   gap: 1.25rem;
   position: sticky;
   top: 1.5rem;
+}
+/* ============== TOTAL TIME WIDGET ============== */
+.total-time-widget.card-pane {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem;
+  transition: all var(--transition-smooth);
+}
+
+.total-time-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.total-time-header h3 {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.total-time-header .header-icon {
+  color: var(--color-peak-focus);
+}
+
+.time-display {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.time-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.time-val {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--color-peak-focus);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.time-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 3px;
 }
 
 
@@ -1450,11 +1510,11 @@ body {
 }
 
 .timer-digits {
-  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
-  font-size: 4.5rem;
-  font-weight: 500;
+  font-family: 'Inter', 'Inter Fallback', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 7rem;
+  font-weight: 900;
   color: var(--text-primary);
-  letter-spacing: 0.04em;
+  letter-spacing: -0.04em;
   line-height: 1;
   transition: color var(--transition-slow);
 }
@@ -1489,9 +1549,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.85rem 1.75rem;
+  padding: 0.85rem 2rem;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 999px;
   font-size: 0.92rem;
   font-weight: 500;
   font-family: inherit;
@@ -1562,11 +1622,13 @@ body {
 /* End Confirm Card */
 .end-confirm-card {
   margin-top: 2rem;
-  padding: 1.5rem;
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-md);
+  padding: 2rem 1.5rem;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
+  border-radius: var(--radius-xl);
   animation: slideUp 0.25s ease;
 }
 
@@ -1590,9 +1652,9 @@ body {
 }
 
 .btn-confirm-end {
-  padding: 0.6rem 1.25rem;
+  padding: 0.75rem 1.75rem;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   background: var(--color-peak-focus);
   color: white;
   font-weight: 500;
@@ -1604,14 +1666,15 @@ body {
 
 .btn-confirm-end:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .btn-cancel-end {
-  padding: 0.6rem 1.25rem;
-  border: 1.5px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+  padding: 0.75rem 1.75rem;
+  border: 1.5px solid var(--text-slate);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-obsidian);
   font-weight: 500;
   font-size: 0.85rem;
   font-family: inherit;
@@ -1620,7 +1683,8 @@ body {
 }
 
 .btn-cancel-end:hover {
-  background: var(--bg-hover);
+  background: rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
 }
 
 /* Session inline task panel */
@@ -1631,10 +1695,93 @@ body {
 }
 
 .session-task-panel .task-panel {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem 1.75rem;
+  text-align: left;
+}
+
+.session-task-panel .task-panel h3 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-slate);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1.2rem;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.session-task-panel .task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+}
+
+.session-task-panel .task-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--text-slate);
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-base);
+  position: relative;
   background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
+  opacity: 0.5;
+}
+
+.session-task-panel .task-checkbox:hover {
+  opacity: 1;
+}
+
+.session-task-panel .task-checkbox:checked {
+  background: var(--color-great-progress);
+  border-color: var(--color-great-progress);
+  opacity: 1;
+}
+
+.session-task-panel .task-checkbox:checked::after {
+  content: '✓';
+  color: white;
+  font-size: 11px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: bold;
+}
+
+.session-task-panel .task-input {
+  font-size: 0.85rem;
+  color: var(--text-obsidian);
+  font-weight: 500;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: all var(--transition-base);
+  padding: 0.2rem 0;
+}
+
+.session-task-panel .task-input::placeholder {
+  color: var(--text-slate);
+  opacity: 0.5;
+}
+
+.session-task-panel .task-input:focus {
+  border-bottom-color: rgba(0,0,0,0.1);
+  outline: none;
+}
+
+.session-task-panel .task-input.completed {
+  color: var(--text-slate);
+  opacity: 0.5;
+  text-decoration-color: var(--text-slate);
 }
 
 /* Compact task panel variant */
