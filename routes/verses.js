@@ -1,6 +1,4 @@
 import express from 'express';
-import OpenAI from 'openai';
-import fs from 'fs/promises';
 import url from 'url';
 import path from 'path';
 import pool from '../db.js';
@@ -16,50 +14,8 @@ const VERSE_POOL_SIZE = 25;
 router.use(expressAuth);
 
 // Seed 25 Bible verses using GPT
-async function seedVerses(userId) {
-  console.log(`[Verse API] Seeding fresh verses for user ${userId}...`);
-  // Clear existing verses first to avoid duplicates
-  await pool.query('DELETE FROM bible_verses WHERE user_id = $1', [userId]);
-
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_KEY });
-
-  const rulesPath = path.join(__dirname, '..', 'rules', 'bible_rules.txt');
-  const systemInstruction = await fs.readFile(rulesPath, 'utf8');
-
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    temperature: 1.0,
-    max_tokens: 4000,
-    response_format: { type: 'json_object' },
-    messages: [
-      {
-        role: 'system',
-        content: systemInstruction + '\n\nWhen asked for multiple verses, return a JSON object with a "verses" array. Each item must have "verse" and "reference" fields.',
-      },
-      {
-        role: 'user',
-        content: `Give me ${VERSE_POOL_SIZE} unique and different encouraging Bible verses. 
-        IMPORTANT: Use many different books (Psalms, Proverbs, Isaiah, Gospels, Epistles, etc). 
-        Do NOT repeat any verses. Make them about strength, perseverance, peace, wisdom, hope, comfort, joy, and faith.
-        Return as JSON: {"verses": [{"verse": "...", "reference": "Book Chapter:Verse"}, ...]}`,
-      },
-    ],
-  });
-
-  const raw = completion.choices[0].message.content.trim();
-  const parsed = JSON.parse(raw);
-  const verses = parsed.verses || [];
-
-  // Insert all verses into the database
-  for (let i = 0; i < verses.length; i++) {
-    await pool.query(
-      'INSERT INTO bible_verses (user_id, verse, reference, sort_order) VALUES ($1, $2, $3, $4)',
-      [userId, verses[i].verse, verses[i].reference, i]
-    );
-  }
-
-  return verses.length;
-}
+// AI Seeding removed as per user request. 
+// Verses are now managed manually in the database.
 
 router.get('/verse', async (req, res) => {
   try {
@@ -70,22 +26,7 @@ router.get('/verse', async (req, res) => {
     );
     const verseCount = parseInt(countRows[0].cnt);
 
-    // If not enough verses, or none yet, seed them
-    if (verseCount < VERSE_POOL_SIZE) {
-      try {
-        if (!process.env.OPENAI_KEY) {
-          throw new Error('OPENAI_KEY is missing');
-        }
-        await seedVerses(req.user.id);
-      } catch (seedErr) {
-        console.error('Failed to seed verses:', seedErr.message);
-        // Return a fallback verse
-        return res.json({
-          verse: "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world.",
-          reference: 'John 16:33',
-        });
-      }
-    }
+    // If no verses exist, the rotation will fallback to the static verse at the end
 
     // Check when the last verse rotation happened using DATABASE time
     const { rows: timeCheck } = await pool.query(
