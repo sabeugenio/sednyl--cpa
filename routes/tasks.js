@@ -70,18 +70,6 @@ router.post('/carryover', async (req, res) => {
         await client.query('COMMIT');
         skipped = true;
       } else {
-        // 1) Delete completed 'today' tasks (they're done, clear them out)
-        await client.query(
-          `DELETE FROM tasks WHERE user_id = $1 AND type = 'today' AND completed = 1`,
-          [req.user.id]
-        );
-
-        // 2) Promote 'tomorrow' tasks → 'today' (uncheck them)
-        await client.query(
-          `UPDATE tasks SET type = 'today', completed = 0 WHERE user_id = $1 AND type = 'tomorrow'`,
-          [req.user.id]
-        );
-
         // 3) Mark carryover as done for today
         await client.query(
           `INSERT INTO settings (user_id, key, value) VALUES ($1, 'last_carryover_date', $2)

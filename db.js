@@ -27,6 +27,7 @@ const initDb = async () => {
         incomplete_tasks INTEGER DEFAULT 0,
         is_running INTEGER DEFAULT 0,
         last_start_time TEXT DEFAULT NULL,
+        tasks_json TEXT DEFAULT '[]',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, date)
@@ -129,6 +130,7 @@ const initDb = async () => {
       `ALTER TABLE study_topics ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id)`,
       `ALTER TABLE entries ADD COLUMN IF NOT EXISTS completed_tasks INTEGER DEFAULT 0`,
       `ALTER TABLE entries ADD COLUMN IF NOT EXISTS incomplete_tasks INTEGER DEFAULT 0`,
+      `ALTER TABLE entries ADD COLUMN IF NOT EXISTS tasks_json TEXT DEFAULT '[]'`,
       `ALTER TABLE bible_verses ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0`,
     ];
 

@@ -35,8 +35,18 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
   const totalTime = computedTime || existingEntry?.total_time_seconds || 0;
   const statusInfo = STATUS_CONFIG[status] || STATUS_CONFIG['reset_day'];
 
-  const completedTasks = existingEntry?.completed_tasks || 0;
-  const incompleteTasks = existingEntry?.incomplete_tasks || 0;
+  const completedTasksCount = existingEntry?.completed_tasks || 0;
+  const incompleteTasksCount = existingEntry?.incomplete_tasks || 0;
+
+  // Task history list from snapshot
+  let taskHistory = [];
+  try {
+    if (existingEntry?.tasks_json) {
+      taskHistory = JSON.parse(existingEntry.tasks_json);
+    }
+  } catch (err) {
+    console.error('Failed to parse task history:', err);
+  }
 
   useEffect(() => {
     if (existingEntry) {
@@ -45,8 +55,8 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
       setFeeling(existingEntry.feeling || '');
       setThought(existingEntry.thought || '');
       setFreeWrite(existingEntry.free_write || '');
-      // Auto-expand only if existing entry already has data
-      if (existingEntry.what_i_did || existingEntry.next_step || existingEntry.feeling || existingEntry.thought || existingEntry.free_write) {
+      // Auto-expand journal only if it has data
+      if (existingEntry.feeling || existingEntry.thought || existingEntry.free_write) {
         setShowJournal(true);
       }
     }
@@ -93,14 +103,14 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                   <span className="stat-label">Studied</span>
                 </div>
               )}
-              {(completedTasks > 0 || incompleteTasks > 0) && (
+              {(completedTasksCount > 0 || incompleteTasksCount > 0) && (
                 <>
                   <div className="result-stat-item">
-                    <span className="stat-value">{completedTasks}</span>
+                    <span className="stat-value">{completedTasksCount}</span>
                     <span className="stat-label">Tasks Done</span>
                   </div>
                   <div className="result-stat-item">
-                    <span className="stat-value">{incompleteTasks}</span>
+                    <span className="stat-value">{incompleteTasksCount}</span>
                     <span className="stat-label">Pending</span>
                   </div>
                 </>
@@ -109,6 +119,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
             
             <p className="result-message">{statusInfo.message}</p>
           </div>
+
 
             <div className="form-group">
                 <label className="form-label">What I did</label>
@@ -133,6 +144,45 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                   readOnly={readOnly}
                 />
               </div>
+
+          {/* Task History Snapshot - Moved here */}
+          {taskHistory.length > 0 && (
+            <div className="task-history-section">
+              <div className="task-history-groups">
+                {taskHistory.some(t => t.completed) && (
+                  <div className="task-history-group">
+                    <label className="form-label text-success">List of finished task</label>
+                    <div className="task-history-list">
+                      {taskHistory.filter(t => t.completed).map((task, i) => (
+                        <div key={i} className="task-history-item finished">
+                          <CheckCircle2 size={14} className="task-done-icon" />
+                          <span className="task-history-content completed">
+                            {task.content}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {taskHistory.some(t => !t.completed) && (
+                  <div className="task-history-group">
+                    <label className="form-label text-pending">List of not finished task</label>
+                    <div className="task-history-list">
+                      {taskHistory.filter(t => !t.completed).map((task, i) => (
+                        <div key={i} className="task-history-item">
+                          <Circle size={14} className="task-todo-icon" />
+                          <span className="task-history-content">
+                            {task.content}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Journal toggle — collapsed by default */}
           <button

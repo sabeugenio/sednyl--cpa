@@ -131,20 +131,15 @@ function Dashboard({ session, onLogout }) {
   }, []);
 
   // Run carryover on load, then load tasks
-  const runCarryoverAndLoadTasks = useCallback(async () => {
-    try {
-      await carryoverTasks();
-    } catch (err) {
-      console.error('Carryover failed (may be first run):', err);
-    }
+  const runAndLoadTasks = useCallback(async () => {
     await loadTasks();
   }, [loadTasks]);
 
   useEffect(() => {
     loadEntries();
-    runCarryoverAndLoadTasks();
+    runAndLoadTasks();
     loadSettings();
-  }, [loadEntries, runCarryoverAndLoadTasks, loadSettings]);
+  }, [loadEntries, runAndLoadTasks, loadSettings]);
 
   // Check for active session on load (persistence across reloads)
   useEffect(() => {
@@ -266,6 +261,15 @@ function Dashboard({ session, onLogout }) {
 
   // End session — show journal (from either full-screen or mini timer)
   const handleEndSession = async (totalTime, status) => {
+    // 1) CAPTURE SNAPSHOT IMMEDIATELY (Move this to the top to avoid race conditions)
+    const currentTasksSnapshot = tasksRef.current
+      .filter(t => t.type === 'today' && t.content)
+      .map(t => ({ content: t.content, completed: t.completed }));
+    
+    const completedCount = currentTasksSnapshot.filter(t => t.completed).length;
+    const incompleteCount = currentTasksSnapshot.filter(t => !t.completed).length;
+    const tasksJson = JSON.stringify(currentTasksSnapshot);
+
     const date = activeSession.date;
     setActiveSession(null);
     setShowFullTimer(false);
@@ -279,14 +283,9 @@ function Dashboard({ session, onLogout }) {
       // No entry
     }
 
-    // Calculate current task counts
-    const todayTasks = tasks.filter(t => t.type === 'today' && t.content);
-    const completedCount = todayTasks.filter(t => t.completed).length;
-    const incompleteCount = todayTasks.filter(t => !t.completed).length;
-
     setPostSession({ 
       date, 
-      entry: entry ? { ...entry, completed_tasks: completedCount, incomplete_tasks: incompleteCount } : { completed_tasks: completedCount, incomplete_tasks: incompleteCount }, 
+      entry: entry ? { ...entry, completed_tasks: completedCount, incomplete_tasks: incompleteCount, tasks_json: tasksJson } : { completed_tasks: completedCount, incomplete_tasks: incompleteCount, tasks_json: tasksJson }, 
       status, 
       totalTime 
     });
@@ -313,12 +312,30 @@ function Dashboard({ session, onLogout }) {
   // Save entry (post-session journal save)
   const handleSaveEntry = async (entryData) => {
     try {
-      await saveEntry(entryData);
+      // Snapshot today's tasks
+      const todayTasks = tasksRef.current
+        .filter((t) => t.type === 'today' && t.content)
+        .map(t => ({ content: t.content, completed: t.completed }));
+      const tasksJson = JSON.stringify(todayTasks);
+
+      await saveEntry({ ...entryData, tasks_json: tasksJson });
+      
+      // Clear today's tasks after successful save
+      const remainingTasks = tasksRef.current.filter((t) => t.type !== 'today');
+      setTasks(remainingTasks);
+      
+      // Persist the cleared state to backend
+      const tasksToSave = remainingTasks
+        .filter((t) => t.content || t.completed)
+        .map((t) => ({ type: t.type, content: t.content, completed: t.completed ? 1 : 0 }));
+      await saveTasks(tasksToSave);
+
       setPostSession(null);
       setViewEntry(null);
       setJustSavedDate(entryData.date);
       setTimeout(() => setJustSavedDate(null), 600);
       await loadEntries();
+      await loadTasks();
       showToastMessage(getToastMessage(entryData.status));
     } catch (err) {
       console.error('Failed to save entry:', err);
@@ -330,12 +347,19 @@ function Dashboard({ session, onLogout }) {
     setTasks((prev) => {
       let found = false;
       const updated = prev.map((t) => {
-        if (t.id === updatedTask.id) { found = true; return updatedTask; }
+        if (t.id === updatedTask.id) { 
+          found = true; 
+          return updatedTask; 
+        }
         return t;
       });
       if (!found) {
-        updated.push({ ...updatedTask, id: undefined });
+        // If it's a new task but empty, don't add it yet unless it's a structural update
+        if (!updatedTask.content && !updatedTask.isNew) return prev;
+        updated.push({ ...updatedTask, id: updatedTask.id || `temp-${Date.now()}` });
       }
+      // Immediate cleanup: remove tasks that are emptied and not currently being edited? 
+      // Actually, let the filter during save handle it to avoid flickering while typing.
       return updated;
     });
 
@@ -352,7 +376,7 @@ function Dashboard({ session, onLogout }) {
       } catch (err) {
         console.error('Failed to save tasks:', err);
       }
-    }, 800);
+    }, 5000);
   };
 
   // Toast
@@ -443,9 +467,7 @@ function Dashboard({ session, onLogout }) {
             <TotalTimeWidget entries={entries} />
             <StudyGuidance currentPhase={currentPhase} onPhaseChange={handlePhaseChange} />
             <WeeklySuccess entries={entries} />
-            {activeSession && (
-              <TaskPanel tasks={tasks} onUpdateTask={handleUpdateTask} />
-            )}
+            <TaskPanel tasks={tasks} onUpdateTask={handleUpdateTask} />
           </div>
         </div>
 
