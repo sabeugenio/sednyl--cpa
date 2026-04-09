@@ -2240,18 +2240,6 @@ body {
   margin-bottom: 0.85rem;
 }
 
-.phase-badge {
-  display: inline-block;
-  padding: 0.25rem 0.65rem;
-  background: var(--color-great-progress-bg);
-  border: 1px solid var(--color-great-progress-border);
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--color-great-progress);
-  margin-bottom: 0.85rem;
-}
-
 .subject-row {
   display: flex;
   align-items: center;
@@ -2282,6 +2270,146 @@ body {
   color: var(--color-getting-started);
 }
 
+.focus-drop-zone {
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.6rem;
+  border: 1px dashed transparent;
+  transition: background var(--transition-base), border-color var(--transition-base);
+}
+
+.focus-drop-zone-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.focus-drop-zone.is-drag-over {
+  border-color: var(--border-medium);
+  background: var(--bg-hover);
+}
+
+.focus-picked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-left: 0.1rem;
+}
+
+.focus-picked-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  cursor: grab;
+  user-select: none;
+}
+
+.focus-picked-pill:active {
+  cursor: grabbing;
+}
+
+.focus-picked-pill.is-main {
+  border-color: var(--color-great-progress-border);
+  background: var(--color-great-progress-bg);
+}
+
+.focus-picked-pill.is-main .focus-subject-pill-name {
+  color: var(--color-great-progress);
+}
+
+.focus-picked-pill.is-light {
+  border-color: var(--status-gold-light);
+  background: rgba(212, 192, 122, 0.08);
+}
+
+.focus-picked-pill.is-light .focus-subject-pill-name {
+  color: var(--color-getting-started);
+}
+
+.focus-subjects-pool {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.focus-subjects-pool-header {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+
+.focus-subjects-pool-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.focus-subjects-pool-list.is-drag-over {
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem;
+  outline: 1px dashed var(--border-medium);
+  outline-offset: 2px;
+}
+
+.focus-subjects-empty {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.focus-subject-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  cursor: grab;
+  user-select: none;
+}
+
+.focus-subject-pill:active {
+  cursor: grabbing;
+}
+
+.focus-subject-pill-grip {
+  opacity: 0.55;
+}
+
+.focus-subject-pill-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Subject list focus highlights (Subjects widget) */
+.subject-item.is-focus-main .subject-name {
+  color: var(--color-great-progress);
+  font-weight: 700;
+}
+
+.subject-item.is-focus-main {
+  border-left-color: var(--color-great-progress);
+}
+
+.subject-item.is-focus-light .subject-name {
+  color: var(--color-getting-started);
+  font-weight: 700;
+}
+
+.subject-item.is-focus-light {
+  border-left-color: var(--color-getting-started);
+}
+
 .subject-desc {
   font-size: 0.68rem;
   color: var(--text-muted);
@@ -2302,25 +2430,7 @@ body {
   line-height: 1.6;
 }
 
-.phase-next-btn {
-  display: block;
-  width: 100%;
-  padding: 0.5rem;
-  border: 1.5px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all var(--transition-base);
-  margin-bottom: 0.5rem;
-}
-
-.phase-next-btn:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-medium);
-}
+/* Phase UI removed from Focus Topic */
 
 .low-energy-toggle {
   display: inline-flex;
@@ -3940,38 +4050,10 @@ body {
   border-left: 3px solid transparent; /* Container for subject color */
 }
 
-/* Subject Specific Highlight States */
-.subject-item.subject-far { border-left-color: var(--far-color); }
-.subject-item.subject-far:hover { background: var(--far-bg); }
-.subject-item.subject-far .subject-name { color: var(--far-color); }
-
-.subject-item.subject-aud { border-left-color: var(--aud-color); }
-.subject-item.subject-aud:hover { background: var(--aud-bg); }
-.subject-item.subject-aud .subject-name { color: var(--aud-color); }
-
-.subject-item.subject-reg { border-left-color: var(--reg-color); }
-.subject-item.subject-reg:hover { background: var(--reg-bg); }
-.subject-item.subject-reg .subject-name { color: var(--reg-color); }
-
-.subject-item.subject-isc { border-left-color: var(--isc-color); }
-.subject-item.subject-isc:hover { background: var(--isc-bg); }
-.subject-item.subject-isc .subject-name { color: var(--isc-color); }
-
-/* Additional Legacy Subject Mappings */
-.subject-item.subject-afar { border-left-color: var(--far-color); }
-.subject-item.subject-afar .subject-name { color: var(--far-color); }
-
-.subject-item.subject-auditing { border-left-color: var(--aud-color); }
-.subject-item.subject-auditing .subject-name { color: var(--aud-color); }
-
-.subject-item.subject-taxation { border-left-color: var(--reg-color); }
-.subject-item.subject-taxation .subject-name { color: var(--reg-color); }
-
-.subject-item.subject-mas { border-left-color: var(--status-gold); }
-.subject-item.subject-mas .subject-name { color: var(--status-gold); }
-
-.subject-item.subject-rfbt { border-left-color: var(--status-gold); }
-.subject-item.subject-rfbt .subject-name { color: var(--status-gold); }
+/* Subject colors removed: focus colors only (Main/Light) */
+.subject-item .subject-name {
+  color: var(--text-primary);
+}
 
 .subject-item:hover {
   background: rgba(45, 138, 78, 0.06);

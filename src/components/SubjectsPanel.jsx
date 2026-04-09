@@ -12,6 +12,7 @@ import {
   addChecklistItem,
   updateChecklistItem,
   deleteChecklistItem,
+  fetchSettings,
 } from '../utils/api';
 import {
   ChevronDown,
@@ -48,13 +49,30 @@ export default function SubjectsPanel() {
   const [newChecklistByTopic, setNewChecklistByTopic] = useState({});
   const [isAddingChecklistByTopic, setIsAddingChecklistByTopic] = useState({});
 
+  const [focusMainIds, setFocusMainIds] = useState([]);
+  const [focusLightIds, setFocusLightIds] = useState([]);
+
   const subjectInputRef = useRef(null);
 
   // Load all subjects and their topics
   const loadAllData = useCallback(async () => {
     try {
-      const fetchedSubjects = await fetchSubjects();
+      const [fetchedSubjects, settings] = await Promise.all([fetchSubjects(), fetchSettings()]);
       setSubjects(fetchedSubjects);
+      const parseIds = (raw) => {
+        if (!raw) return [];
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed.map((x) => String(x));
+        } catch {}
+        return [];
+      };
+      const mainIds = parseIds(settings.focus_main_subject_ids);
+      const lightIds = parseIds(settings.focus_light_subject_ids);
+      const legacyMain = settings.focus_main_subject_id ? [String(settings.focus_main_subject_id)] : [];
+      const legacyLight = settings.focus_light_subject_id ? [String(settings.focus_light_subject_id)] : [];
+      setFocusMainIds(Array.from(new Set([...(mainIds.length ? mainIds : legacyMain)])));
+      setFocusLightIds(Array.from(new Set([...(lightIds.length ? lightIds : legacyLight)])));
 
       // Load topics and checklists for each subject
       const topicsMap = {};
@@ -90,6 +108,18 @@ export default function SubjectsPanel() {
   useEffect(() => {
     loadAllData();
   }, [loadAllData]);
+
+  useEffect(() => {
+    const onFocusUpdated = (e) => {
+      const detail = e?.detail || {};
+      const nextMain = Array.isArray(detail.mainIds) ? detail.mainIds.map((x) => String(x)) : [];
+      const nextLight = Array.isArray(detail.lightIds) ? detail.lightIds.map((x) => String(x)) : [];
+      setFocusMainIds(nextMain);
+      setFocusLightIds(nextLight);
+    };
+    window.addEventListener('focusSubjectsUpdated', onFocusUpdated);
+    return () => window.removeEventListener('focusSubjectsUpdated', onFocusUpdated);
+  }, []);
 
   // Add new subject
   const handleAddSubject = async () => {
@@ -315,7 +345,10 @@ export default function SubjectsPanel() {
               const subjectTopics = topicsBySubject[subject.id] || [];
 
               return (
-                <div key={subject.id} className={`subject-item subject-${subject.name.trim().toLowerCase()}`}>
+                <div
+                  key={subject.id}
+                  className={`subject-item subject-${subject.name.trim().toLowerCase()} ${focusMainIds.includes(String(subject.id)) ? 'is-focus-main' : ''} ${focusLightIds.includes(String(subject.id)) ? 'is-focus-light' : ''}`}
+                >
                   <button
                     className="subject-toggle-btn"
                     onClick={() => {
