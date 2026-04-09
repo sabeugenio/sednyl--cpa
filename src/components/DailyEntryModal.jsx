@@ -28,6 +28,13 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
   const [thought, setThought] = useState('');
   const [freeWrite, setFreeWrite] = useState('');
   const [showJournal, setShowJournal] = useState(false);
+  const [isEditing, setIsEditing] = useState(() => {
+    if (readOnly) return false;
+    // Post-session flow should remain editable immediately.
+    if (isPostSession) return true;
+    // Existing entries open in view-first mode.
+    return !existingEntry;
+  });
 
   // The status is either computed from session or loaded from existing entry
   const rawStatus = computedStatus || existingEntry?.status || 'reset_day';
@@ -52,6 +59,13 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
   }, [existingEntry?.tasks_json]);
 
   const [taskHistory, setTaskHistory] = useState([]);
+  const effectiveReadOnly = Boolean(readOnly || !isEditing);
+
+  useEffect(() => {
+    if (readOnly) setIsEditing(false);
+    else if (isPostSession) setIsEditing(true);
+    else setIsEditing(!existingEntry);
+  }, [readOnly, isPostSession, existingEntry, date]);
 
   useEffect(() => {
     if (existingEntry) {
@@ -72,6 +86,15 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
     setTaskHistory((prev) => prev.filter((_, idx) => idx !== indexToDelete));
   };
 
+  const handleToggleHistoryTask = (indexToToggle) => {
+    if (effectiveReadOnly) return;
+    setTaskHistory((prev) =>
+      prev.map((task, idx) =>
+        idx === indexToToggle ? { ...task, completed: !task.completed } : task
+      )
+    );
+  };
+
   const formatDate = (dateStr) => {
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -83,19 +106,16 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
     onSave({
       date,
       status,
+      session_summary: existingEntry?.session_summary || '',
       what_i_did: whatIDid,
       next_step: nextStep,
       feeling,
       thought,
       free_write: freeWrite,
       total_time_seconds: totalTime,
-      ...(isPostSession
-        ? {
-            tasks_json: JSON.stringify(taskHistory),
-            completed_tasks: completedCount,
-            incomplete_tasks: incompleteCount,
-          }
-        : {}),
+      tasks_json: JSON.stringify(taskHistory),
+      completed_tasks: completedCount,
+      incomplete_tasks: incompleteCount,
     });
   };
 
@@ -104,7 +124,14 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{formatDate(date)}</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+          <div className="modal-header-actions">
+            {!readOnly && !isEditing && existingEntry && (
+              <button className="modal-edit-btn" onClick={() => setIsEditing(true)}>
+                Edit
+              </button>
+            )}
+            <button className="modal-close" onClick={onClose}>×</button>
+          </div>
         </div>
 
         <div className="modal-body">
@@ -135,8 +162,8 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                 </>
               )}
             </div>
-            
             <p className="result-message">{statusInfo.message}</p>
+            
           </div>
 
 
@@ -148,7 +175,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                   value={whatIDid}
                   onChange={(e) => setWhatIDid(e.target.value)}
                   placeholder="e.g., Reviewed FAR Chapter 3"
-                  readOnly={readOnly}
+                  readOnly={effectiveReadOnly}
                 />
               </div>
 
@@ -160,7 +187,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                   value={nextStep}
                   onChange={(e) => setNextStep(e.target.value)}
                   placeholder="e.g., Start practice MCQs"
-                  readOnly={readOnly}
+                  readOnly={effectiveReadOnly}
                 />
               </div>
 
@@ -177,11 +204,17 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                         .filter(({ task }) => task?.completed)
                         .map(({ task, idx }) => (
                         <div key={idx} className="task-history-item finished">
-                          <CheckCircle2 size={14} className="task-done-icon" />
+                          <input
+                            className="task-checkbox"
+                            type="checkbox"
+                            checked={!!task.completed}
+                            onChange={() => handleToggleHistoryTask(idx)}
+                            disabled={effectiveReadOnly}
+                          />
                           <span className="task-history-content completed">
                             {task.content}
                           </span>
-                          {!readOnly && (
+                          {!effectiveReadOnly && (
                             <button
                               className="task-history-delete-btn"
                               onClick={() => handleDeleteHistoryTask(idx)}
@@ -206,11 +239,17 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                         .filter(({ task }) => task && !task.completed)
                         .map(({ task, idx }) => (
                         <div key={idx} className="task-history-item">
-                          <Circle size={14} className="task-todo-icon" />
+                          <input
+                            className="task-checkbox"
+                            type="checkbox"
+                            checked={!!task.completed}
+                            onChange={() => handleToggleHistoryTask(idx)}
+                            disabled={effectiveReadOnly}
+                          />
                           <span className="task-history-content">
                             {task.content}
                           </span>
-                          {!readOnly && (
+                          {!effectiveReadOnly && (
                             <button
                               className="task-history-delete-btn"
                               onClick={() => handleDeleteHistoryTask(idx)}
@@ -249,7 +288,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                   onChange={(e) => setFeeling(e.target.value)}
                   placeholder="1–3 words"
                   maxLength={50}
-                  readOnly={readOnly}
+                  readOnly={effectiveReadOnly}
                 />
               </div>
 
@@ -261,7 +300,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                   value={thought}
                   onChange={(e) => setThought(e.target.value)}
                   placeholder="One short sentence"
-                  readOnly={readOnly}
+                  readOnly={effectiveReadOnly}
                 />
               </div>
 
@@ -272,7 +311,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
                   value={freeWrite}
                   onChange={(e) => setFreeWrite(e.target.value)}
                   placeholder="Write anything you'd like…"
-                  readOnly={readOnly}
+                  readOnly={effectiveReadOnly}
                 />
               </div>
             </div>
@@ -281,9 +320,9 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
           {/* Actions */}
           <div className="modal-actions">
             <button className="btn-cancel" onClick={onClose}>
-              {readOnly ? 'Close' : 'Cancel'}
+              {effectiveReadOnly ? 'Close' : 'Cancel'}
             </button>
-            {!readOnly && (
+            {!effectiveReadOnly && (
               <button
                 className="btn-save"
                 onClick={handleSave}

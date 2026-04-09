@@ -28,31 +28,32 @@ router.get('/:date', async (req, res) => {
 // POST /api/entries - Upsert entry (full save including journal)
 router.post('/', async (req, res) => {
   try {
-    const { date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, completed_tasks, incomplete_tasks, tasks_json } = req.body;
+    const { date, status, session_summary, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, completed_tasks, incomplete_tasks, tasks_json } = req.body;
 
     if (!date || !status) {
       return res.status(400).json({ error: 'date and status are required' });
     }
 
     await pool.query(`
-      INSERT INTO entries (user_id, date, status, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, completed_tasks, incomplete_tasks, tasks_json, is_running, last_start_time)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 0, NULL)
+      INSERT INTO entries (user_id, date, status, session_summary, what_i_did, next_step, feeling, thought, free_write, total_time_seconds, completed_tasks, incomplete_tasks, tasks_json, is_running, last_start_time)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 0, NULL)
       ON CONFLICT(user_id, date) DO UPDATE SET
         status = $3,
-        what_i_did = $4,
-        next_step = $5,
-        feeling = $6,
-        thought = $7,
-        free_write = $8,
-        total_time_seconds = $9,
-        completed_tasks = $10,
-        incomplete_tasks = $11,
-        tasks_json = $12,
+        session_summary = $4,
+        what_i_did = $5,
+        next_step = $6,
+        feeling = $7,
+        thought = $8,
+        free_write = $9,
+        total_time_seconds = $10,
+        completed_tasks = $11,
+        incomplete_tasks = $12,
+        tasks_json = $13,
         is_running = 0,
         last_start_time = NULL,
         updated_at = CURRENT_TIMESTAMP
     `, [
-      req.user.id, date, status, what_i_did || '', next_step || '', feeling || '', thought || '', free_write || '',
+      req.user.id, date, status, session_summary || '', what_i_did || '', next_step || '', feeling || '', thought || '', free_write || '',
       total_time_seconds || 0, completed_tasks || 0, incomplete_tasks || 0, tasks_json || '[]'
     ]);
 

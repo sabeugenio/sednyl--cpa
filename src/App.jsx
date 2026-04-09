@@ -582,12 +582,12 @@ function Dashboard({ session, onLogout }) {
         />
       )}
 
-      {/* View past entry (read-only) */}
+      {/* View/edit past entry */}
       {viewEntry && (
         <DailyEntryModal
           date={viewEntry.date}
           existingEntry={viewEntry.entry}
-          readOnly={true}
+          readOnly={!viewEntry.entry}
           onSave={handleSaveEntry}
           onClose={() => setViewEntry(null)}
         />
