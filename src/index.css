@@ -13,11 +13,11 @@
   --status-gold-light: rgba(212, 192, 122, 0.15);
 
   /* Countdown label colors (Important Dates) */
-  --cd-green: var(--brand-green);
+  --cd-green: #77eda6;
   --cd-yellow: #f5a623;
   --cd-pink: #f472b6;
   --cd-purple: #8b5cf6;
-  --cd-blue: #3b82f6;
+  --cd-blue: #90bdf5;
   
   /* Subject Specific Tokens - Restored */
   --far-color: #2a69ac;
