@@ -4160,7 +4160,7 @@ body {
   background: var(--surface-white);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
-  border-top: 3px solid transparent;
+  border-top: 3px solid #f0c9dd;
   overflow: hidden;
   transition: all var(--transition-smooth);
   box-shadow: var(--shadow-sm);
@@ -4181,7 +4181,13 @@ body {
 }
 
 .item-card.is-soon {
-  border-top-color: #f9a825;
+  border-top-color: #f472b6; /* baby pink, same as tomorrow */
+}
+
+.item-card.is-soon .days-val,
+.item-card.is-soon .days-label {
+  color: #f472b6;
+  opacity: 1;
 }
 
 .item-card.is-past {
@@ -4243,7 +4249,7 @@ body {
 
 .days-val {
   font-family: 'Inter', 'Inter Fallback', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 2.8rem;
+  font-size: 2.2rem;
   font-weight: 900;
   color: var(--text-obsidian);
   line-height: 1;
@@ -4252,8 +4258,10 @@ body {
 
 .item-card.is-past .days-val {
   text-decoration: line-through;
-  text-decoration-thickness: 6px;
-  color: var(--text-slate);
+  text-decoration-thickness: 4px;
+  text-decoration-color: var(--text-obsidian);
+  /* Use RGBA equivalent to var(--text-slate) at 0.6 opacity so the line itself stays dark */
+  color: rgba(107, 107, 107, 0.6);
 }
 
 .days-label {
@@ -4262,14 +4270,14 @@ body {
   font-weight: 900;
   color: var(--text-slate);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.1em;    
   opacity: 0.6;
   align-self: center;
 }
 
 .status-highlight {
   font-family: 'Inter', 'Inter Fallback', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 2.8rem;
+  font-size: 2.2rem;
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
