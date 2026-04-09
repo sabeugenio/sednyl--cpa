@@ -2,13 +2,54 @@ import React, { useMemo } from 'react';
 import { normalizeStatus } from '../utils/statusUtils';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const STATUS_EMOJIS = {
+  peak_focus: '🔥',
+  great_progress: '💪',
+  getting_started: '🌱',
+  reset_day: '🌼'
+};
 
+function getDateOnly(value) {
+  if (typeof value !== 'string') return null;
+  const d = value.split('T')[0];
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+}
 
-export default function Calendar({ year, month, entries, onDayClick, onPrev, onNext, justSavedDate, activeSessionDate }) {
+function compareDateOnly(a, b) {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+export default function Calendar({ year, month, entries, countdowns = [], onDayClick, onPrev, onNext, justSavedDate, activeSessionDate }) {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
   const monthName = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  const countdownMarksByDate = useMemo(() => {
+    const map = {};
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const colors = new Set();
+
+      for (const c of countdowns || []) {
+        const color = (c?.color || 'pink').toLowerCase();
+        const start = getDateOnly(c?.start_date || c?.target_date);
+        const end = getDateOnly(c?.end_date || c?.target_date);
+        if (!start || !end) continue;
+
+        if (compareDateOnly(start, dateStr) <= 0 && compareDateOnly(dateStr, end) <= 0) {
+          colors.add(color);
+        }
+      }
+
+      if (colors.size) map[dateStr] = Array.from(colors);
+    }
+
+    return map;
+  }, [countdowns, year, month]);
 
   const days = useMemo(() => {
     const firstDay = new Date(year, month, 1).getDay();
@@ -27,6 +68,7 @@ export default function Calendar({ year, month, entries, onDayClick, onPrev, onN
       const entry = entries[dateStr];
       const rawStatus = entry?.status || null;
       const status = normalizeStatus(rawStatus);
+      const countdownColors = countdownMarksByDate[dateStr] || [];
 
       result.push({
         type: 'day',
@@ -37,11 +79,12 @@ export default function Calendar({ year, month, entries, onDayClick, onPrev, onN
         isToday: dateStr === todayStr,
         status,
         hasActiveSession: dateStr === activeSessionDate,
+        countdownColors,
       });
     }
 
     return result;
-  }, [year, month, entries, todayStr, activeSessionDate]);
+  }, [year, month, entries, todayStr, activeSessionDate, countdownMarksByDate]);
 
   return (
     <div className="calendar-container">
@@ -76,11 +119,20 @@ export default function Calendar({ year, month, entries, onDayClick, onPrev, onN
               title={item.status || 'Click to log'}
             >
               <span className="day-number">{item.day}</span>
-              {item.status && (
-                <span className={`status-dot ${item.status}`} />
+              {item.status && STATUS_EMOJIS[item.status] && (
+                <span className="day-status-emoji" aria-hidden="true">
+                  {STATUS_EMOJIS[item.status]}
+                </span>
               )}
               {item.hasActiveSession && (
                 <span className="session-pulse-dot" />
+              )}
+              {item.countdownColors?.length > 0 && (
+                <div className="countdown-mark-stack" aria-hidden="true">
+                  {item.countdownColors.slice(0, 4).map((c) => (
+                    <span key={c} className={`countdown-mark color-${c}`} />
+                  ))}
+                </div>
               )}
             </div>
           );
@@ -89,20 +141,20 @@ export default function Calendar({ year, month, entries, onDayClick, onPrev, onN
 
       <div className="calendar-legend">
         <div className="legend-item">
-          <span className="legend-dot" style={{ background: 'var(--color-peak-focus)' }} />
-          <span>🔥 Peak Focus</span>
+          <span className="legend-emoji" aria-hidden="true">🔥</span>
+          <span>Peak Focus</span>
         </div>
         <div className="legend-item">
-          <span className="legend-dot" style={{ background: 'var(--color-great-progress)' }} />
-          <span>💪 Great Progress</span>
+          <span className="legend-emoji" aria-hidden="true">💪</span>
+          <span>Great Progress</span>
         </div>
         <div className="legend-item">
-          <span className="legend-dot" style={{ background: 'var(--color-getting-started)' }} />
-          <span>🌱 Getting Started</span>
+          <span className="legend-emoji" aria-hidden="true">🌱</span>
+          <span>Getting Started</span>
         </div>
         <div className="legend-item">
-          <span className="legend-dot" style={{ background: 'var(--color-reset-day)' }} />
-          <span>🌼 Reset Day</span>
+          <span className="legend-emoji" aria-hidden="true">🌼</span>
+          <span>Rest Day</span>
         </div>
       </div>
     </div>

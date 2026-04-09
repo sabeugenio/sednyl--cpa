@@ -5,14 +5,41 @@ import { expressAuth } from '../auth.js';
 const router = express.Router();
 router.use(expressAuth);
 
+const ALLOWED_COLORS = new Set(['green', 'yellow', 'pink', 'purple', 'blue']);
+
+function normalizeCountdownColor(value) {
+  if (typeof value !== 'string') return 'pink';
+  const v = value.trim().toLowerCase();
+  return ALLOWED_COLORS.has(v) ? v : 'pink';
+}
+
 function isValidDateString(value) {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+  if (typeof value !== 'string' || !value.trim()) return false;
+  // Support:
+  // - YYYY-MM-DD
+  // - YYYY-MM-DDTHH:MM
+  // - YYYY-MM-DD HH:MM
+  // - YYYY-MM-DDTHH:MM:SS
+  return /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?$/.test(value.trim());
+}
+
+function normalizeDateTimeString(value) {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  // If only a date is provided, normalize to local midnight for consistent ordering.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return `${trimmed}T00:00`;
+  // Replace space with T if needed
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(trimmed)) return trimmed.replace(' ', 'T');
+  return trimmed;
 }
 
 function compareDateStrings(a, b) {
-  // For YYYY-MM-DD, lexicographic order matches chronological order
-  if (a === b) return 0;
-  return a < b ? -1 : 1;
+  // For ISO-ish strings (YYYY-MM-DD or YYYY-MM-DDTHH:MM[:SS]),
+  // lexicographic order matches chronological order when normalized.
+  const na = normalizeDateTimeString(a);
+  const nb = normalizeDateTimeString(b);
+  if (na === nb) return 0;
+  return na < nb ? -1 : 1;
 }
 
 // GET /api/countdowns
@@ -31,34 +58,40 @@ router.get('/', async (req, res) => {
 // POST /api/countdowns
 router.post('/', async (req, res) => {
   try {
-    const { title, targetDate, startDate, endDate } = req.body;
+    const { title, targetDate, startDate, endDate, color } = req.body;
     const trimmedTitle = typeof title === 'string' ? title.trim() : '';
     if (!trimmedTitle) {
       return res.status(400).json({ error: 'title is required' });
     }
+    const normalizedColor = normalizeCountdownColor(color);
 
     const isRange = startDate !== undefined || endDate !== undefined;
     if (isRange) {
       if (!isValidDateString(startDate) || !isValidDateString(endDate)) {
-        return res.status(400).json({ error: 'startDate and endDate must be YYYY-MM-DD' });
+        console.warn('[Countdown API] Invalid range dates:', { startDate, endDate });
+        return res.status(400).json({ error: 'startDate and endDate must be YYYY-MM-DD or YYYY-MM-DDTHH:MM' });
       }
-      if (compareDateStrings(startDate, endDate) > 0) {
+      const normStart = normalizeDateTimeString(startDate);
+      const normEnd = normalizeDateTimeString(endDate);
+      if (compareDateStrings(normStart, normEnd) > 0) {
         return res.status(400).json({ error: 'startDate must be on or before endDate' });
       }
 
       const { rows } = await pool.query(
-        'INSERT INTO study_countdowns (user_id, title, target_date, start_date, end_date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [req.user.id, trimmedTitle, startDate, startDate, endDate]
+        'INSERT INTO study_countdowns (user_id, title, target_date, start_date, end_date, color) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [req.user.id, trimmedTitle, normStart, normStart, normEnd, normalizedColor]
       );
       return res.json(rows[0]);
     }
 
     if (!isValidDateString(targetDate)) {
-      return res.status(400).json({ error: 'targetDate is required and must be YYYY-MM-DD' });
+      console.warn('[Countdown API] Invalid targetDate:', { targetDate });
+      return res.status(400).json({ error: 'targetDate is required and must be YYYY-MM-DD or YYYY-MM-DDTHH:MM' });
     }
+    const normTarget = normalizeDateTimeString(targetDate);
     const { rows } = await pool.query(
-      'INSERT INTO study_countdowns (user_id, title, target_date, start_date, end_date) VALUES ($1, $2, $3, NULL, NULL) RETURNING *',
-      [req.user.id, trimmedTitle, targetDate]
+      'INSERT INTO study_countdowns (user_id, title, target_date, start_date, end_date, color) VALUES ($1, $2, $3, NULL, NULL, $4) RETURNING *',
+      [req.user.id, trimmedTitle, normTarget, normalizedColor]
     );
     res.json(rows[0]);
   } catch (err) {
@@ -70,7 +103,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, targetDate, startDate, endDate } = req.body;
+    const { title, targetDate, startDate, endDate, color } = req.body;
     const updates = [];
     const values = [];
     let paramIndex = 1;
@@ -80,27 +113,35 @@ router.put('/:id', async (req, res) => {
       values.push(title.trim());
     }
 
+    if (color !== undefined) {
+      updates.push(`color = $${paramIndex++}`);
+      values.push(normalizeCountdownColor(color));
+    }
+
     const isRangeUpdate = startDate !== undefined || endDate !== undefined;
     if (isRangeUpdate) {
       if (!isValidDateString(startDate) || !isValidDateString(endDate)) {
-        return res.status(400).json({ error: 'startDate and endDate must be YYYY-MM-DD' });
+        return res.status(400).json({ error: 'startDate and endDate must be YYYY-MM-DD or YYYY-MM-DDTHH:MM' });
       }
-      if (compareDateStrings(startDate, endDate) > 0) {
+      const normStart = normalizeDateTimeString(startDate);
+      const normEnd = normalizeDateTimeString(endDate);
+      if (compareDateStrings(normStart, normEnd) > 0) {
         return res.status(400).json({ error: 'startDate must be on or before endDate' });
       }
 
       updates.push(`target_date = $${paramIndex++}`);
-      values.push(startDate);
+      values.push(normStart);
       updates.push(`start_date = $${paramIndex++}`);
-      values.push(startDate);
+      values.push(normStart);
       updates.push(`end_date = $${paramIndex++}`);
-      values.push(endDate);
+      values.push(normEnd);
     } else if (targetDate !== undefined) {
       if (!isValidDateString(targetDate)) {
-        return res.status(400).json({ error: 'targetDate must be YYYY-MM-DD' });
+        return res.status(400).json({ error: 'targetDate must be YYYY-MM-DD or YYYY-MM-DDTHH:MM' });
       }
+      const normTarget = normalizeDateTimeString(targetDate);
       updates.push(`target_date = $${paramIndex++}`);
-      values.push(targetDate);
+      values.push(normTarget);
       // Explicitly clear any existing range when switching back to single date
       updates.push(`start_date = NULL`);
       updates.push(`end_date = NULL`);

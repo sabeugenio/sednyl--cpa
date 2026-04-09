@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { ChevronRight, ChevronDown, GripVertical } from 'lucide-react';
 import { fetchSubjects, fetchSettings, saveSetting } from '../utils/api';
 
@@ -19,34 +19,43 @@ export default function StudyGuidance({ currentPhase, onPhaseChange }) {
     return LOW_ENERGY_MESSAGES[Math.floor(Math.random() * LOW_ENERGY_MESSAGES.length)];
   }, []);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [fetchedSubjects, settings] = await Promise.all([fetchSubjects(), fetchSettings()]);
-        setSubjects(fetchedSubjects);
+  const load = useCallback(async () => {
+    try {
+      const [fetchedSubjects, settings] = await Promise.all([fetchSubjects(), fetchSettings()]);
+      setSubjects(fetchedSubjects);
 
-        const parseIds = (raw) => {
-          if (!raw) return [];
-          try {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) return parsed.map((x) => String(x));
-          } catch {}
-          return [];
-        };
+      const parseIds = (raw) => {
+        if (!raw) return [];
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed.map((x) => String(x));
+        } catch {}
+        return [];
+      };
 
-        const mainIds = parseIds(settings.focus_main_subject_ids);
-        const lightIds = parseIds(settings.focus_light_subject_ids);
-        const legacyMain = settings.focus_main_subject_id ? [String(settings.focus_main_subject_id)] : [];
-        const legacyLight = settings.focus_light_subject_id ? [String(settings.focus_light_subject_id)] : [];
+      const mainIds = parseIds(settings.focus_main_subject_ids);
+      const lightIds = parseIds(settings.focus_light_subject_ids);
+      const legacyMain = settings.focus_main_subject_id ? [String(settings.focus_main_subject_id)] : [];
+      const legacyLight = settings.focus_light_subject_id ? [String(settings.focus_light_subject_id)] : [];
 
-        setFocusMainIds(Array.from(new Set([...(mainIds.length ? mainIds : legacyMain)])));
-        setFocusLightIds(Array.from(new Set([...(lightIds.length ? lightIds : legacyLight)])));
-      } catch (err) {
-        console.error('Failed to load focus subjects:', err);
-      }
-    };
-    load();
+      setFocusMainIds(Array.from(new Set([...(mainIds.length ? mainIds : legacyMain)])));
+      setFocusLightIds(Array.from(new Set([...(lightIds.length ? lightIds : legacyLight)])));
+    } catch (err) {
+      console.error('Failed to load focus subjects:', err);
+    }
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    const onSubjectsUpdated = () => {
+      load();
+    };
+    window.addEventListener('subjectsUpdated', onSubjectsUpdated);
+    return () => window.removeEventListener('subjectsUpdated', onSubjectsUpdated);
+  }, [load]);
 
   const focusMain = subjects.filter((s) => focusMainIds.includes(String(s.id)));
   const focusLight = subjects.filter((s) => focusLightIds.includes(String(s.id)));

@@ -113,6 +113,7 @@ const initDb = async () => {
         target_date TEXT NOT NULL,
         start_date TEXT DEFAULT NULL,
         end_date TEXT DEFAULT NULL,
+        color TEXT NOT NULL DEFAULT 'pink',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -136,6 +137,7 @@ const initDb = async () => {
       `ALTER TABLE bible_verses ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0`,
       `ALTER TABLE study_countdowns ADD COLUMN IF NOT EXISTS start_date TEXT DEFAULT NULL`,
       `ALTER TABLE study_countdowns ADD COLUMN IF NOT EXISTS end_date TEXT DEFAULT NULL`,
+      `ALTER TABLE study_countdowns ADD COLUMN IF NOT EXISTS color TEXT NOT NULL DEFAULT 'pink'`,
     ];
 
     for (const sql of migrations) {

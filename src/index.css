@@ -11,6 +11,13 @@
   --brand-green-light: rgba(46, 154, 89, 0.1);
   --status-gold: #d4c07a;
   --status-gold-light: rgba(212, 192, 122, 0.15);
+
+  /* Countdown label colors (Important Dates) */
+  --cd-green: var(--brand-green);
+  --cd-yellow: #f5a623;
+  --cd-pink: #f472b6;
+  --cd-purple: #8b5cf6;
+  --cd-blue: #3b82f6;
   
   /* Subject Specific Tokens - Restored */
   --far-color: #2a69ac;
@@ -290,6 +297,24 @@ body {
   border: 2px solid transparent;
 }
 
+/* Countdown reminder line(s) */
+.countdown-mark-stack {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.countdown-mark {
+  height: 3px;
+  border-radius: 999px;
+  opacity: 0.95;
+}
+
 .calendar-day:hover:not(.empty) {
   background: var(--bg-hover);
   transform: scale(1.05);
@@ -309,11 +334,10 @@ body {
   line-height: 1;
 }
 
-.calendar-day .status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-top: 3px;
+.calendar-day .day-status-emoji {
+  font-size: 0.95rem;
+  margin-top: 2px;
+  line-height: 1;
 }
 
 /* New Status backgrounds on calendar */
@@ -353,14 +377,7 @@ body {
 }
 
 /* Status dots */
-.status-dot.peak_focus { background: var(--color-peak-focus); }
-.status-dot.great_progress { background: var(--color-great-progress); }
-.status-dot.getting_started { background: var(--color-getting-started); }
-.status-dot.reset_day { background: var(--color-reset-day); }
-.status-dot.strong { background: var(--color-strong); }
-.status-dot.showed_up { background: var(--color-showed-up); }
-.status-dot.bare_minimum { background: var(--color-bare-minimum); }
-.status-dot.missed { background: var(--color-missed); }
+/* Status dots removed in favor of emojis */
 
 /* Active session pulsing indicator */
 .calendar-day.active-session {
@@ -400,10 +417,9 @@ body {
   color: var(--text-secondary);
 }
 
-.legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.legend-emoji {
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 /* ============== MINI TIMER (HOME PAGE) ============== */
@@ -630,8 +646,10 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 1rem;
   justify-content: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .total-time-header h3 {
@@ -694,7 +712,10 @@ body {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-bottom: 0.85rem;
+  text-align: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .week-dots {
@@ -750,7 +771,10 @@ body {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-bottom: 0.75rem;
+  text-align: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .task-section {
@@ -941,8 +965,11 @@ body {
 .topics-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  margin-bottom: 0.65rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .topics-icon-wrapper {
@@ -2237,7 +2264,10 @@ body {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-bottom: 0.85rem;
+  text-align: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .subject-row {
@@ -4039,7 +4069,8 @@ body {
 
 .subject-item {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 0.5rem;
   padding: 0.5rem;
   border-radius: var(--radius-sm);
@@ -4050,6 +4081,37 @@ body {
   border-left: 3px solid transparent; /* Container for subject color */
 }
 
+.subject-item-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  width: 100%;
+}
+
+.subject-item-main:focus-visible {
+  outline: 2px solid var(--color-peak-focus-border);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.subject-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.subject-item-main:hover .subject-toggle-icon {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
 /* Subject colors removed: focus colors only (Main/Light) */
 .subject-item .subject-name {
   color: var(--text-primary);
@@ -4057,26 +4119,6 @@ body {
 
 .subject-item:hover {
   background: rgba(45, 138, 78, 0.06);
-}
-
-.subject-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all var(--transition-base);
-  flex-shrink: 0;
-}
-
-.subject-toggle-btn:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
 }
 
 .subject-name {
@@ -4436,10 +4478,11 @@ body {
 
 .countdown-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: start;
+  align-items: start;
+  position: relative;
+  padding-bottom: 0.85rem;
   margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -4461,6 +4504,13 @@ body {
   color: var(--text-obsidian);
   margin: 0;
   letter-spacing: 0.02em;
+  text-align: center;
+}
+
+/* Ensure actions in countdown header are positioned on the right */
+.countdown-header .add-trigger-btn {
+  position: absolute;
+  right: 0;
 }
 
 .add-trigger-btn {
@@ -4484,6 +4534,31 @@ body {
 }
 
 /* Items Grid & Cards */
+.items-scroll {
+  /* Show ~3 cards like the screenshot, scroll inside for the rest */
+  max-height: min(490px, 100vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px; /* keep content from hiding under scrollbar */
+}
+
+.items-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.items-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.items-scroll::-webkit-scrollbar-thumb {
+  background: rgba(244, 114, 182, 0.22);
+  border-radius: 999px;
+}
+
+.items-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(244, 114, 182, 0.35);
+}
+
 .items-grid {
   display: flex;
   flex-direction: column;
@@ -4541,7 +4616,7 @@ body {
 .item-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
 }
 
@@ -4562,11 +4637,85 @@ body {
   color: var(--text-obsidian);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  line-height: 1.35;
+  padding-top: 1px;
 }
 
+.countdown-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+/* Countdown color picker */
+.countdown-color-picker {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.countdown-color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.countdown-color-swatch:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.countdown-color-swatch.selected {
+  border-color: rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 0 0 2px white,
+    0 0 0 4.5px rgba(46, 154, 89, 0.45);
+  transform: scale(1.18);
+  z-index: 2;
+}
+
+.countdown-color-swatch.selected::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Shared color classes */
+.color-green { background: var(--cd-green); }
+.color-yellow { background: var(--cd-yellow); }
+.color-pink { background: var(--cd-pink); }
+.color-purple { background: var(--cd-purple); }
+.color-blue { background: var(--cd-blue); }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .item-date {
   font-size: 0.8rem;
   color: var(--text-slate);
@@ -4688,11 +4837,13 @@ body {
   background: var(--surface-white);
   border: 1.5px solid var(--surface-medium);
   border-radius: var(--radius-sm);
-  padding: 0.65rem 0.85rem;
+  padding: 0.65rem 0.25rem;
   font-family: inherit;
   font-size: 0.9rem;
   color: var(--text-primary);
   transition: var(--transition-smooth);
+  max-width: 100%;
+  min-width: 0;
 }
 
 .editor-input:focus {

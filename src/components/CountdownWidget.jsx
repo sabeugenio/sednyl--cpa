@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Timer, Plus, X, Trash2, Edit2, Check } from 'lucide-react';
 import { fetchCountdowns, addCountdown, updateCountdown, deleteCountdown } from '../utils/api';
 
-function CountdownWidget() {
+function CountdownWidget({ onChanged }) {
   const [countdowns, setCountdowns] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -13,6 +13,7 @@ function CountdownWidget() {
   const [newDate, setNewDate] = useState('');
   const [newStartDate, setNewStartDate] = useState('');
   const [newEndDate, setNewEndDate] = useState('');
+  const [newColor, setNewColor] = useState('pink'); // green | yellow | pink | purple | blue
 
   // Edit state
   const [editingId, setEditingId] = useState(null);
@@ -21,6 +22,24 @@ function CountdownWidget() {
   const [editDate, setEditDate] = useState('');
   const [editStartDate, setEditStartDate] = useState('');
   const [editEndDate, setEditEndDate] = useState('');
+  const [editColor, setEditColor] = useState('pink');
+
+  const COLOR_OPTIONS = [
+    { id: 'green', label: 'Green' },
+    { id: 'yellow', label: 'Yellow' },
+    { id: 'pink', label: 'Pink' },
+    { id: 'purple', label: 'Purple' },
+    { id: 'blue', label: 'Blue' },
+  ];
+
+  const toDateTimeLocalValue = (value) => {
+    // `datetime-local` accepts: YYYY-MM-DDTHH:MM (no timezone).
+    if (typeof value !== 'string' || !value) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return `${value}T00:00`;
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return value;
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value)) return value.slice(0, 16);
+    return '';
+  };
 
   useEffect(() => {
     loadCountdowns();
@@ -46,19 +65,28 @@ function CountdownWidget() {
     if (!isRange && !newDate) return;
 
     try {
-      await addCountdown({
+      const payload = {
         title: newTitle,
-        targetDate: isRange ? undefined : newDate,
-        startDate: isRange ? newStartDate : undefined,
-        endDate: isRange ? newEndDate : undefined,
-      });
+        color: newColor,
+      };
+
+      if (isRange) {
+        payload.startDate = newStartDate;
+        payload.endDate = newEndDate;
+      } else {
+        payload.targetDate = newDate;
+      }
+
+      await addCountdown(payload);
       setIsAdding(false);
       setNewTitle('');
       setNewDateMode('single');
       setNewDate('');
       setNewStartDate('');
       setNewEndDate('');
+      setNewColor('pink');
       loadCountdowns();
+      onChanged?.();
     } catch (error) {
       console.error('Failed to add countdown:', error);
     }
@@ -67,14 +95,15 @@ function CountdownWidget() {
   const handleEdit = (c) => {
     setEditingId(c.id);
     setEditTitle(c.title);
+    setEditColor(c.color || 'pink');
     if (c.start_date && c.end_date) {
       setEditDateMode('range');
-      setEditStartDate(c.start_date);
-      setEditEndDate(c.end_date);
+      setEditStartDate(toDateTimeLocalValue(c.start_date));
+      setEditEndDate(toDateTimeLocalValue(c.end_date));
       setEditDate('');
     } else {
       setEditDateMode('single');
-      setEditDate(c.target_date);
+      setEditDate(toDateTimeLocalValue(c.target_date));
       setEditStartDate('');
       setEditEndDate('');
     }
@@ -88,14 +117,22 @@ function CountdownWidget() {
     if (!isRange && !editDate) return;
 
     try {
-      await updateCountdown(editingId, {
+      const payload = {
         title: editTitle,
-        targetDate: isRange ? undefined : editDate,
-        startDate: isRange ? editStartDate : undefined,
-        endDate: isRange ? editEndDate : undefined,
-      });
+        color: editColor,
+      };
+
+      if (isRange) {
+        payload.startDate = editStartDate;
+        payload.endDate = editEndDate;
+      } else {
+        payload.targetDate = editDate;
+      }
+
+      await updateCountdown(editingId, payload);
       setEditingId(null);
       loadCountdowns();
+      onChanged?.();
     } catch (error) {
       console.error('Failed to update countdown:', error);
     }
@@ -105,26 +142,33 @@ function CountdownWidget() {
     try {
       await deleteCountdown(id);
       loadCountdowns();
+      onChanged?.();
     } catch (error) {
       console.error('Failed to delete countdown:', error);
     }
   };
 
   const calculateDays = (targetDateStr) => {
+    // Calendar-day diff (ignores time-of-day) so labels like Today/Tomorrow behave intuitively.
     const target = new Date(targetDateStr);
-    target.setHours(0, 0, 0, 0);
     const now = new Date();
-    now.setHours(0, 0, 0, 0);
+    const targetDay = new Date(target);
+    const nowDay = new Date(now);
+    targetDay.setHours(0, 0, 0, 0);
+    nowDay.setHours(0, 0, 0, 0);
 
-    const diffTime = target - now;
+    const diffTime = targetDay - nowDay;
     return Math.round(diffTime / (1000 * 60 * 60 * 24));
   };
 
   const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString([], {
+    return new Date(dateStr).toLocaleString([], {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
     });
   };
 
@@ -177,11 +221,16 @@ function CountdownWidget() {
 
     const start = new Date(c.start_date);
     const end = new Date(c.end_date);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
 
-    const daysUntilStart = Math.round((start - now) / (1000 * 60 * 60 * 24));
-    const daysUntilEnd = Math.round((end - now) / (1000 * 60 * 60 * 24));
+    const startDay = new Date(start);
+    const endDay = new Date(end);
+    const nowDay = new Date(now);
+    startDay.setHours(0, 0, 0, 0);
+    endDay.setHours(0, 0, 0, 0);
+    nowDay.setHours(0, 0, 0, 0);
+
+    const daysUntilStart = Math.round((startDay - nowDay) / (1000 * 60 * 60 * 24));
+    const daysUntilEnd = Math.round((endDay - nowDay) / (1000 * 60 * 60 * 24));
 
     const isBefore = now < start;
     const isDuring = now >= start && now <= end;
@@ -267,6 +316,23 @@ function CountdownWidget() {
                 />
               </div>
               <div className="input-group">
+                <label>COLOR LABEL</label>
+                <div className="countdown-color-picker" role="radiogroup" aria-label="Countdown color">
+                  {COLOR_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={`countdown-color-swatch color-${opt.id} ${newColor === opt.id ? 'selected' : ''}`}
+                      onClick={() => setNewColor(opt.id)}
+                      aria-pressed={newColor === opt.id}
+                      title={opt.label}
+                    >
+                      <span className="sr-only">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="input-group">
                 <label>DATE</label>
                 <div className="countdown-date-mode">
                   <label className="countdown-date-mode-option">
@@ -293,7 +359,7 @@ function CountdownWidget() {
                 {newDateMode === 'single' ? (
                   <input
                     id="newDate"
-                    type="date"
+                    type="datetime-local"
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
                     className="editor-input"
@@ -304,7 +370,7 @@ function CountdownWidget() {
                       <span className="countdown-date-range-label">Start</span>
                       <input
                         id="newStartDate"
-                        type="date"
+                        type="datetime-local"
                         value={newStartDate}
                         onChange={(e) => setNewStartDate(e.target.value)}
                         className="editor-input"
@@ -314,7 +380,7 @@ function CountdownWidget() {
                       <span className="countdown-date-range-label">End</span>
                       <input
                         id="newEndDate"
-                        type="date"
+                        type="datetime-local"
                         value={newEndDate}
                         onChange={(e) => setNewEndDate(e.target.value)}
                         className="editor-input"
@@ -357,129 +423,147 @@ function CountdownWidget() {
             <p>No milestones tracked yet.</p>
           </div>
         ) : (
-          <div className="items-grid">
-            {countdowns.map((c) => {
-              if (editingId === c.id) {
-                return (
-                  <div key={c.id} className="form-container editing">
-                    <h4 className="form-legend">Update Milestone</h4>
-                    <form className="countdown-editor-form" onSubmit={handleUpdate}>
-                      <div className="input-group">
-                        <label>EVENT NAME</label>
-                        <input
-                          type="text"
-                          value={editTitle}
-                          onChange={(e) => setEditTitle(e.target.value)}
-                          className="editor-input"
-                        />
-                      </div>
-                      <div className="input-group">
-                        <label>DATE</label>
-                        <div className="countdown-date-mode">
-                          <label className="countdown-date-mode-option">
-                            <input
-                              type="radio"
-                              name={`editDateMode-${c.id}`}
-                              value="single"
-                              checked={editDateMode === 'single'}
-                              onChange={() => setEditDateMode('single')}
-                            />
-                            <span>Single</span>
-                          </label>
-                          <label className="countdown-date-mode-option">
-                            <input
-                              type="radio"
-                              name={`editDateMode-${c.id}`}
-                              value="range"
-                              checked={editDateMode === 'range'}
-                              onChange={() => setEditDateMode('range')}
-                            />
-                            <span>Range</span>
-                          </label>
-                        </div>
-                        {editDateMode === 'single' ? (
+          <div className="items-scroll" aria-label="Important dates list">
+            <div className="items-grid">
+              {countdowns.map((c) => {
+                if (editingId === c.id) {
+                  return (
+                    <div key={c.id} className="form-container editing">
+                      <h4 className="form-legend">Update Milestone</h4>
+                      <form className="countdown-editor-form" onSubmit={handleUpdate}>
+                        <div className="input-group">
+                          <label>EVENT NAME</label>
                           <input
-                            type="date"
-                            value={editDate}
-                            onChange={(e) => setEditDate(e.target.value)}
+                            type="text"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
                             className="editor-input"
                           />
-                        ) : (
-                          <div className="countdown-date-range">
-                            <div className="countdown-date-range-field">
-                              <span className="countdown-date-range-label">Start</span>
+                        </div>
+                      <div className="input-group">
+                        <label>COLOR LABEL</label>
+                        <div className="countdown-color-picker" role="radiogroup" aria-label="Countdown color">
+                          {COLOR_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              className={`countdown-color-swatch color-${opt.id} ${editColor === opt.id ? 'selected' : ''}`}
+                              onClick={() => setEditColor(opt.id)}
+                              aria-pressed={editColor === opt.id}
+                              title={opt.label}
+                            >
+                              <span className="sr-only">{opt.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                        <div className="input-group">
+                          <label>DATE</label>
+                          <div className="countdown-date-mode">
+                            <label className="countdown-date-mode-option">
                               <input
-                                type="date"
-                                value={editStartDate}
-                                onChange={(e) => setEditStartDate(e.target.value)}
-                                className="editor-input"
+                                type="radio"
+                                name={`editDateMode-${c.id}`}
+                                value="single"
+                                checked={editDateMode === 'single'}
+                                onChange={() => setEditDateMode('single')}
                               />
-                            </div>
-                            <div className="countdown-date-range-field">
-                              <span className="countdown-date-range-label">End</span>
+                              <span>Single</span>
+                            </label>
+                            <label className="countdown-date-mode-option">
                               <input
-                                type="date"
-                                value={editEndDate}
-                                onChange={(e) => setEditEndDate(e.target.value)}
-                                className="editor-input"
-                                min={editStartDate || undefined}
+                                type="radio"
+                                name={`editDateMode-${c.id}`}
+                                value="range"
+                                checked={editDateMode === 'range'}
+                                onChange={() => setEditDateMode('range')}
                               />
-                            </div>
+                              <span>Range</span>
+                            </label>
                           </div>
-                        )}
+                          {editDateMode === 'single' ? (
+                            <input
+                            type="datetime-local"
+                              value={editDate}
+                              onChange={(e) => setEditDate(e.target.value)}
+                              className="editor-input"
+                            />
+                          ) : (
+                            <div className="countdown-date-range">
+                              <div className="countdown-date-range-field">
+                                <span className="countdown-date-range-label">Start</span>
+                                <input
+                                type="datetime-local"
+                                  value={editStartDate}
+                                  onChange={(e) => setEditStartDate(e.target.value)}
+                                  className="editor-input"
+                                />
+                              </div>
+                              <div className="countdown-date-range-field">
+                                <span className="countdown-date-range-label">End</span>
+                                <input
+                                type="datetime-local"
+                                  value={editEndDate}
+                                  onChange={(e) => setEditEndDate(e.target.value)}
+                                  className="editor-input"
+                                  min={editStartDate || undefined}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="form-footer">
+                          <button
+                            type="button"
+                            className="btn-cancel"
+                            onClick={() => setEditingId(null)}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="btn-save"
+                            disabled={
+                              !editTitle.trim() ||
+                              (editDateMode === 'single' ? !editDate : !editStartDate || !editEndDate)
+                            }
+                          >
+                            Update
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  );
+                }
+
+                const { statusClass, countdownEl, dateLabel } = getCountdownDisplay(c);
+
+                return (
+                  <div key={c.id} className={`item-card ${statusClass}`}>
+                    <div className="item-card-inner">
+                      <div className="item-card-header">
+                        <span className="item-title">
+                          <span className={`countdown-legend-dot color-${c.color || 'pink'}`} aria-hidden="true" />
+                          {c.title}
+                        </span>
+                        <div className="item-header-actions">
+                          <button className="action-btn-mini edit" onClick={() => handleEdit(c)} title="Edit">
+                            <Edit2 size={13} />
+                          </button>
+                          <button className="action-btn-mini delete" onClick={() => handleDelete(c.id)} title="Delete">
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                       </div>
-                      <div className="form-footer">
-                        <button 
-                          type="button" 
-                          className="btn-cancel" 
-                          onClick={() => setEditingId(null)}
-                        >
-                          Cancel
-                        </button>
-                        <button 
-                          type="submit" 
-                          className="btn-save"
-                          disabled={
-                            !editTitle.trim() ||
-                            (editDateMode === 'single' ? !editDate : !editStartDate || !editEndDate)
-                          }
-                        >
-                          Update
-                        </button>
-                      </div>
-                    </form>
+
+                      <div className="item-countdown-row">{countdownEl}</div>
+
+                      <span className="item-date">{dateLabel}</span>
+                    </div>
                   </div>
                 );
-              }
-
-              const { statusClass, countdownEl, dateLabel } = getCountdownDisplay(c);
-
-              return (
-                <div key={c.id} className={`item-card ${statusClass}`}>
-                  <div className="item-card-inner">
-                    <div className="item-card-header">
-                      <span className="item-title">{c.title}</span>
-                      <div className="item-header-actions">
-                        <button className="action-btn-mini edit" onClick={() => handleEdit(c)} title="Edit">
-                          <Edit2 size={13} />
-                        </button>
-                        <button className="action-btn-mini delete" onClick={() => handleDelete(c.id)} title="Delete">
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="item-countdown-row">
-                      {countdownEl}
-                    </div>
-
-                    <span className="item-date">
-                      {dateLabel}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+              })}
+            </div>
           </div>
         )}
       </div>

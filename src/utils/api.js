@@ -241,17 +241,17 @@ export async function fetchCountdowns() {
 export async function addCountdown(arg1, arg2) {
   // Backward compatible:
   // - addCountdown(title, targetDate)
-  // - addCountdown({ title, targetDate, startDate, endDate })
+  // - addCountdown({ title, targetDate, startDate, endDate, color })
   const payload =
     arg1 && typeof arg1 === 'object'
       ? arg1
       : { title: arg1, targetDate: arg2 };
 
-  const { title, targetDate, startDate, endDate } = payload || {};
+  const { title, targetDate, startDate, endDate, color } = payload || {};
   return apiFetch(`/countdowns`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, targetDate, startDate, endDate }),
+    body: JSON.stringify({ title, targetDate, startDate, endDate, color }),
   });
 }
 

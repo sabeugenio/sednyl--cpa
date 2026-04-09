@@ -17,7 +17,7 @@ import BibleVerse from './components/BibleVerse';
 import Chatbot from './components/Chatbot';
 import CountdownWidget from './components/CountdownWidget';
 import TotalTimeWidget from './components/TotalTimeWidget';
-import { fetchEntries, fetchEntryByDate, saveEntry, fetchTasks, saveTasks, exportData, importData, fetchSettings, saveSetting, carryoverTasks } from './utils/api';
+import { fetchEntries, fetchEntryByDate, saveEntry, fetchTasks, saveTasks, exportData, importData, fetchSettings, saveSetting, carryoverTasks, fetchCountdowns } from './utils/api';
 import { loadTimerState, clearTimerState } from './utils/timerStorage';
 
 import { Flame, Trophy, Sprout, Sun } from 'lucide-react';
@@ -83,6 +83,7 @@ function Dashboard({ session, onLogout }) {
   const [month, setMonth] = useState(now.getMonth());
   const [entries, setEntries] = useState({});
   const [tasks, setTasks] = useState([]);
+  const [countdowns, setCountdowns] = useState([]);
   const [toast, setToast] = useState(null);
   const [justSavedDate, setJustSavedDate] = useState(null);
   const [currentPhase, setCurrentPhase] = useState('1');
@@ -130,6 +131,15 @@ function Dashboard({ session, onLogout }) {
     }
   }, []);
 
+  const loadCountdowns = useCallback(async () => {
+    try {
+      const data = await fetchCountdowns();
+      setCountdowns(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to load countdowns:', err);
+    }
+  }, []);
+
   // Run carryover on load, then load tasks
   const runAndLoadTasks = useCallback(async () => {
     await loadTasks();
@@ -139,7 +149,8 @@ function Dashboard({ session, onLogout }) {
     loadEntries();
     runAndLoadTasks();
     loadSettings();
-  }, [loadEntries, runAndLoadTasks, loadSettings]);
+    loadCountdowns();
+  }, [loadEntries, runAndLoadTasks, loadSettings, loadCountdowns]);
 
   // Check for active session on load (persistence across reloads)
   useEffect(() => {
@@ -498,7 +509,7 @@ function Dashboard({ session, onLogout }) {
 
         <div className="main-content">
           <div className="countdown-column">
-            <CountdownWidget />
+            <CountdownWidget onChanged={loadCountdowns} />
           </div>
 
           <div className="center-column">
@@ -506,6 +517,7 @@ function Dashboard({ session, onLogout }) {
               year={year}
               month={month}
               entries={entries}
+              countdowns={countdowns}
               onDayClick={handleDayClick}
               onPrev={handlePrevMonth}
               onNext={handleNextMonth}

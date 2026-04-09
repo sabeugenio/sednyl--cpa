@@ -114,6 +114,7 @@ export default function SubjectsPanel() {
       const detail = e?.detail || {};
       const nextMain = Array.isArray(detail.mainIds) ? detail.mainIds.map((x) => String(x)) : [];
       const nextLight = Array.isArray(detail.lightIds) ? detail.lightIds.map((x) => String(x)) : [];
+
       setFocusMainIds(nextMain);
       setFocusLightIds(nextLight);
     };
@@ -131,6 +132,10 @@ export default function SubjectsPanel() {
       setCompletedTopicsBySubject((prev) => ({ ...prev, [created.id]: [] }));
       setNewSubjectName('');
       setIsAddingSubject(false);
+      
+      // Notify other widgets (e.g., StudyGuidance) to refresh their pools
+      window.dispatchEvent(new CustomEvent('subjectsUpdated', { detail: { type: 'add', subject: created } }));
+
       if (subjectInputRef.current) subjectInputRef.current.focus();
     } catch (err) {
       console.error('Failed to add subject:', err);
@@ -241,6 +246,9 @@ export default function SubjectsPanel() {
       const newTopics = { ...topicsBySubject };
       delete newTopics[id];
       setTopicsBySubject(newTopics);
+
+      // Notify other widgets
+      window.dispatchEvent(new CustomEvent('subjectsUpdated', { detail: { type: 'delete', id } }));
     } catch (err) {
       console.error('Failed to delete subject:', err);
     }
@@ -291,6 +299,255 @@ export default function SubjectsPanel() {
   const totalActiveTopics = Object.values(topicsBySubject).reduce((sum, topics) => sum + topics.length, 0);
   const totalCompletedTopics = Object.values(completedTopicsBySubject).reduce((sum, topics) => sum + topics.length, 0);
   const totalTopics = totalActiveTopics + totalCompletedTopics;
+  const focusedSubjectIdSet = new Set([...focusMainIds, ...focusLightIds].map((id) => String(id)));
+  const focusedSubjects = subjects.filter((s) => focusedSubjectIdSet.has(String(s.id)));
+  const hiddenSubjects = subjects.filter((s) => !focusedSubjectIdSet.has(String(s.id)));
+
+  const renderSubjectItem = (subject) => {
+    const isSubjectExpanded = expandedSubjects.has(subject.id);
+    const subjectTopics = topicsBySubject[subject.id] || [];
+    const toggleSubjectExpand = () => {
+      const newSet = new Set(expandedSubjects);
+      if (newSet.has(subject.id)) {
+        newSet.delete(subject.id);
+      } else {
+        newSet.add(subject.id);
+      }
+      setExpandedSubjects(newSet);
+    };
+
+    return (
+      <div
+        key={subject.id}
+        className={`subject-item subject-${subject.name.trim().toLowerCase()} ${focusMainIds.includes(String(subject.id)) ? 'is-focus-main' : ''} ${focusLightIds.includes(String(subject.id)) ? 'is-focus-light' : ''}`}
+      >
+        <div
+          className="subject-item-main"
+          onClick={toggleSubjectExpand}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggleSubjectExpand();
+            }
+          }}
+          aria-expanded={isSubjectExpanded}
+          title="Show or hide topics"
+        >
+          <span className="subject-toggle-icon" aria-hidden="true">
+            <ChevronRight
+              size={14}
+              style={{
+                transform: isSubjectExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s ease',
+              }}
+            />
+          </span>
+
+          <span className="subject-name">{subject.name}</span>
+          <span className="subject-topic-count">{subjectTopics.length}</span>
+
+          <button
+            className="subject-delete-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              requestDeleteSubject(subject);
+            }}
+            title="Delete subject"
+          >
+            <X size={12} />
+          </button>
+        </div>
+
+        {/* Topics list for this subject */}
+        {isSubjectExpanded && (
+          <div className="topics-nested-list">
+            {subjectTopics.length === 0 ? (
+              <div className="topics-empty">No topics yet</div>
+            ) : (
+              subjectTopics.map((topic) => {
+                const isTopicExpanded = expandedTopics.has(topic.id);
+                const checklists = checklistsByTopic[topic.id] || [];
+                const completedChecklists = checklists.filter((i) => i.completed).length;
+
+                return (
+                  <div key={topic.id} className="topic-item nested">
+                    <button
+                      className="topic-toggle-btn"
+                      onClick={() => {
+                        const newSet = new Set(expandedTopics);
+                        if (newSet.has(topic.id)) {
+                          newSet.delete(topic.id);
+                        } else {
+                          newSet.add(topic.id);
+                        }
+                        setExpandedTopics(newSet);
+                      }}
+                    >
+                      <ChevronRight
+                        size={12}
+                        style={{
+                          transform: isTopicExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.2s ease',
+                        }}
+                      />
+                    </button>
+
+                    <input
+                      className="topic-checkbox"
+                      type="checkbox"
+                      checked={false}
+                      onChange={() => handleToggleTopic(subject.id, topic)}
+                    />
+
+                    <span className="topic-text">{topic.title}</span>
+                    {checklists.length > 0 && (
+                      <span className="checklist-progress">
+                        {completedChecklists}/{checklists.length}
+                      </span>
+                    )}
+
+                    <button
+                      className="topic-delete-btn"
+                      onClick={() => requestDeleteTopic(subject.id, topic)}
+                      title="Delete topic"
+                    >
+                      <X size={12} />
+                    </button>
+
+                    {/* Checklist items */}
+                    {isTopicExpanded && (
+                      <div className="checklist-items">
+                        {checklists.map((item) => (
+                          <div key={item.id} className="checklist-item">
+                            <input
+                              className="checklist-checkbox"
+                              type="checkbox"
+                              checked={item.completed}
+                              onChange={() => handleToggleChecklistItem(item)}
+                            />
+                            <span
+                              className={`checklist-text ${item.completed ? 'completed' : ''}`}
+                            >
+                              {item.content}
+                            </span>
+                            <button
+                              className="checklist-delete-btn"
+                              onClick={() =>
+                                handleDeleteChecklistItem(topic.id, item.id)
+                              }
+                              title="Delete item"
+                            >
+                              <X size={10} />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Add checklist item */}
+                        {isAddingChecklistByTopic[topic.id] ? (
+                          <div className="checklist-add-row">
+                            <input
+                              className="checklist-add-input"
+                              type="text"
+                              value={newChecklistByTopic[topic.id] || ''}
+                              onChange={(e) =>
+                                setNewChecklistByTopic((prev) => ({
+                                  ...prev,
+                                  [topic.id]: e.target.value,
+                                }))
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleAddChecklistItem(topic.id);
+                                } else if (e.key === 'Escape') {
+                                  setIsAddingChecklistByTopic((prev) => ({
+                                    ...prev,
+                                    [topic.id]: false,
+                                  }));
+                                }
+                              }}
+                              placeholder="Add checklist item..."
+                            />
+                            <button
+                              className="checklist-add-btn"
+                              onClick={() => handleAddChecklistItem(topic.id)}
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            className="checklist-add-btn-link"
+                            onClick={() =>
+                              setIsAddingChecklistByTopic((prev) => ({
+                                ...prev,
+                                [topic.id]: true,
+                              }))
+                            }
+                          >
+                            <Plus size={12} />
+                            <span>Add item</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+
+            {/* Add topic button */}
+            {isAddingTopicBySubject[subject.id] ? (
+              <div className="topic-add-row">
+                <input
+                  className="topic-add-input"
+                  type="text"
+                  value={newTopicBySubject[subject.id] || ''}
+                  onChange={(e) =>
+                    setNewTopicBySubject((prev) => ({
+                      ...prev,
+                      [subject.id]: e.target.value,
+                    }))
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddTopic(subject.id);
+                    } else if (e.key === 'Escape') {
+                      setIsAddingTopicBySubject((prev) => ({
+                        ...prev,
+                        [subject.id]: false,
+                      }));
+                    }
+                  }}
+                  placeholder="Enter topic..."
+                />
+                <button
+                  className="topic-add-confirm"
+                  onClick={() => handleAddTopic(subject.id)}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            ) : (
+              <button
+                className="topic-add-btn"
+                onClick={() =>
+                  setIsAddingTopicBySubject((prev) => ({
+                    ...prev,
+                    [subject.id]: true,
+                  }))
+                }
+              >
+                <Plus size={13} />
+                <span>Add topic</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -319,7 +576,14 @@ export default function SubjectsPanel() {
           </div>
         )}
 
-        {/* Show/Hide toggle */}
+        {/* Focused subjects (Main/Light) always visible */}
+        {focusedSubjects.length > 0 && (
+          <div className="subjects-list">
+            {focusedSubjects.map((subject) => renderSubjectItem(subject))}
+          </div>
+        )}
+
+        {/* Show/Hide toggle for non-focused subjects */}
         <button className="topics-toggle-btn" onClick={() => setExpanded(!expanded)}>
           {expanded ? (
             <>
@@ -337,238 +601,10 @@ export default function SubjectsPanel() {
           )}
         </button>
 
-        {/* Subjects list (collapsible) */}
+        {/* Non-focused subjects list (collapsible) */}
         <div className={`topics-list-wrapper ${expanded ? 'expanded' : ''}`}>
           <div className="subjects-list">
-            {subjects.map((subject) => {
-              const isSubjectExpanded = expandedSubjects.has(subject.id);
-              const subjectTopics = topicsBySubject[subject.id] || [];
-
-              return (
-                <div
-                  key={subject.id}
-                  className={`subject-item subject-${subject.name.trim().toLowerCase()} ${focusMainIds.includes(String(subject.id)) ? 'is-focus-main' : ''} ${focusLightIds.includes(String(subject.id)) ? 'is-focus-light' : ''}`}
-                >
-                  <button
-                    className="subject-toggle-btn"
-                    onClick={() => {
-                      const newSet = new Set(expandedSubjects);
-                      if (newSet.has(subject.id)) {
-                        newSet.delete(subject.id);
-                      } else {
-                        newSet.add(subject.id);
-                      }
-                      setExpandedSubjects(newSet);
-                    }}
-                  >
-                    <ChevronRight
-                      size={14}
-                      style={{
-                        transform: isSubjectExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.2s ease',
-                      }}
-                    />
-                  </button>
-
-                  <span className="subject-name">{subject.name}</span>
-                  <span className="subject-topic-count">{subjectTopics.length}</span>
-
-                  <button
-                    className="subject-delete-btn"
-                    onClick={() => requestDeleteSubject(subject)}
-                    title="Delete subject"
-                  >
-                    <X size={12} />
-                  </button>
-
-                  {/* Topics list for this subject */}
-                  {isSubjectExpanded && (
-                    <div className="topics-nested-list">
-                      {subjectTopics.length === 0 ? (
-                        <div className="topics-empty">No topics yet</div>
-                      ) : (
-                        subjectTopics.map((topic) => {
-                          const isTopicExpanded = expandedTopics.has(topic.id);
-                          const checklists = checklistsByTopic[topic.id] || [];
-                          const completedChecklists = checklists.filter((i) => i.completed).length;
-
-                          return (
-                            <div key={topic.id} className="topic-item nested">
-                              <button
-                                className="topic-toggle-btn"
-                                onClick={() => {
-                                  const newSet = new Set(expandedTopics);
-                                  if (newSet.has(topic.id)) {
-                                    newSet.delete(topic.id);
-                                  } else {
-                                    newSet.add(topic.id);
-                                  }
-                                  setExpandedTopics(newSet);
-                                }}
-                              >
-                                <ChevronRight
-                                  size={12}
-                                  style={{
-                                    transform: isTopicExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                                    transition: 'transform 0.2s ease',
-                                  }}
-                                />
-                              </button>
-
-                              <input
-                                className="topic-checkbox"
-                                type="checkbox"
-                                checked={false}
-                                onChange={() => handleToggleTopic(subject.id, topic)}
-                              />
-
-                              <span className="topic-text">{topic.title}</span>
-                              {checklists.length > 0 && (
-                                <span className="checklist-progress">
-                                  {completedChecklists}/{checklists.length}
-                                </span>
-                              )}
-
-                              <button
-                                className="topic-delete-btn"
-                                onClick={() => requestDeleteTopic(subject.id, topic)}
-                                title="Delete topic"
-                              >
-                                <X size={12} />
-                              </button>
-
-                              {/* Checklist items */}
-                              {isTopicExpanded && (
-                                <div className="checklist-items">
-                                  {checklists.map((item) => (
-                                    <div key={item.id} className="checklist-item">
-                                      <input
-                                        className="checklist-checkbox"
-                                        type="checkbox"
-                                        checked={item.completed}
-                                        onChange={() => handleToggleChecklistItem(item)}
-                                      />
-                                      <span
-                                        className={`checklist-text ${item.completed ? 'completed' : ''}`}
-                                      >
-                                        {item.content}
-                                      </span>
-                                      <button
-                                        className="checklist-delete-btn"
-                                        onClick={() =>
-                                          handleDeleteChecklistItem(topic.id, item.id)
-                                        }
-                                        title="Delete item"
-                                      >
-                                        <X size={10} />
-                                      </button>
-                                    </div>
-                                  ))}
-
-                                  {/* Add checklist item */}
-                                  {isAddingChecklistByTopic[topic.id] ? (
-                                    <div className="checklist-add-row">
-                                      <input
-                                        className="checklist-add-input"
-                                        type="text"
-                                        value={newChecklistByTopic[topic.id] || ''}
-                                        onChange={(e) =>
-                                          setNewChecklistByTopic((prev) => ({
-                                            ...prev,
-                                            [topic.id]: e.target.value,
-                                          }))
-                                        }
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter') {
-                                            handleAddChecklistItem(topic.id);
-                                          } else if (e.key === 'Escape') {
-                                            setIsAddingChecklistByTopic((prev) => ({
-                                              ...prev,
-                                              [topic.id]: false,
-                                            }));
-                                          }
-                                        }}
-                                        placeholder="Add checklist item..."
-                                      />
-                                      <button
-                                        className="checklist-add-btn"
-                                        onClick={() => handleAddChecklistItem(topic.id)}
-                                      >
-                                        <Plus size={12} />
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <button
-                                      className="checklist-add-btn-link"
-                                      onClick={() =>
-                                        setIsAddingChecklistByTopic((prev) => ({
-                                          ...prev,
-                                          [topic.id]: true,
-                                        }))
-                                      }
-                                    >
-                                      <Plus size={12} />
-                                      <span>Add item</span>
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })
-                      )}
-
-                      {/* Add topic button */}
-                      {isAddingTopicBySubject[subject.id] ? (
-                        <div className="topic-add-row">
-                          <input
-                            className="topic-add-input"
-                            type="text"
-                            value={newTopicBySubject[subject.id] || ''}
-                            onChange={(e) =>
-                              setNewTopicBySubject((prev) => ({
-                                ...prev,
-                                [subject.id]: e.target.value,
-                              }))
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleAddTopic(subject.id);
-                              } else if (e.key === 'Escape') {
-                                setIsAddingTopicBySubject((prev) => ({
-                                  ...prev,
-                                  [subject.id]: false,
-                                }));
-                              }
-                            }}
-                            placeholder="Enter topic..."
-                          />
-                          <button
-                            className="topic-add-confirm"
-                            onClick={() => handleAddTopic(subject.id)}
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          className="topic-add-btn"
-                          onClick={() =>
-                            setIsAddingTopicBySubject((prev) => ({
-                              ...prev,
-                              [subject.id]: true,
-                            }))
-                          }
-                        >
-                          <Plus size={13} />
-                          <span>Add topic</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {hiddenSubjects.map((subject) => renderSubjectItem(subject))}
 
             {subjects.length === 0 && (
               <div className="topics-empty">No subjects yet — add one below</div>
