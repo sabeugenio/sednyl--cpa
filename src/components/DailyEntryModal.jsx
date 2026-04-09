@@ -232,7 +232,7 @@ export default function DailyEntryModal({ date, existingEntry, onSave, onClose, 
 
                 {taskHistory.some(t => !t.completed) && (
                   <div className="task-history-group">
-                    <label className="form-label text-pending">List of not finished task</label>
+                    <label className="form-label text-pending">List of unfinished tasks</label>
                     <div className="task-history-list">
                       {taskHistory
                         .map((task, idx) => ({ task, idx }))
