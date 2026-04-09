@@ -1631,44 +1631,10 @@ body {
 }
 
 .session-task-panel .task-panel {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-}
-
-.session-task-panel .task-panel h3 {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.session-task-panel .task-section-title {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.session-task-panel .task-input {
-  color: rgba(255, 255, 255, 0.9);
   background: transparent;
-}
-
-.session-task-panel .task-input::placeholder {
-  color: rgba(255, 255, 255, 0.25);
-}
-
-.session-task-panel .task-input.completed {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.session-task-panel .task-checkbox {
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.session-task-panel .task-checkbox:checked {
-  background: var(--color-great-progress);
-  border-color: var(--color-great-progress);
-}
-
-.session-task-panel .task-input:focus {
-  border-bottom-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 
 /* Compact task panel variant */
