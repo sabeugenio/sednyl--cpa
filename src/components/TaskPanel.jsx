@@ -1,7 +1,7 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
-export default function TaskPanel({ tasks, onUpdateTask, compact }) {
+export default function TaskPanel({ tasks, onUpdateTask, onDeleteTask, compact }) {
   const todayTasks = tasks.filter((t) => t.type === 'today');
   const tomorrowTasks = tasks.filter((t) => t.type === 'tomorrow');
 
@@ -29,20 +29,31 @@ export default function TaskPanel({ tasks, onUpdateTask, compact }) {
         <div className="task-section-title">Today</div>
         {displayToday.map((task, i) => (
           <div key={task.id || `today-${i}`} className="task-item">
-            <input
-              className="task-checkbox"
-              type="checkbox"
-              checked={!!task.completed}
-              onChange={(e) => handleChange(task, 'completed', e.target.checked)}
-            />
-            <input
-              className={`task-input ${task.completed ? 'completed' : ''}`}
-              type="text"
-              value={task.content || ''}
-              onChange={(e) => handleChange(task, 'content', e.target.value)}
-              placeholder={i === 0 ? "What's the main focus?" : "Add task..."}
-              autoFocus={task.isNew && i > 0}
-            />
+            <div className="task-item-main">
+              <input
+                className="task-checkbox"
+                type="checkbox"
+                checked={!!task.completed}
+                onChange={(e) => handleChange(task, 'completed', e.target.checked)}
+              />
+              <input
+                className={`task-input ${task.completed ? 'completed' : ''}`}
+                type="text"
+                value={task.content || ''}
+                onChange={(e) => handleChange(task, 'content', e.target.value)}
+                placeholder={i === 0 ? "What's the main focus?" : "Add task..."}
+                autoFocus={task.isNew && i > 0}
+              />
+            </div>
+            {task.id && !task.id.startsWith('empty-') && (
+              <button 
+                className="task-delete-btn" 
+                onClick={() => onDeleteTask(task.id)}
+                title="Delete task"
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
         ))}
         
@@ -58,20 +69,31 @@ export default function TaskPanel({ tasks, onUpdateTask, compact }) {
           <div className="task-section-title">Tomorrow — Start with</div>
           {displayTomorrow.map((task, i) => (
             <div key={task.id || `tomorrow-${i}`} className="task-item">
-              <input
-                className="task-checkbox"
-                type="checkbox"
-                checked={!!task.completed}
-                onChange={(e) => handleChange(task, 'completed', e.target.checked)}
-              />
-              <input
-                className={`task-input ${task.completed ? 'completed' : ''}`}
-                type="text"
-                value={task.content || ''}
-                onChange={(e) => handleChange(task, 'content', e.target.value)}
-                placeholder="Start with: ___"
-                autoFocus={task.isNew}
-              />
+              <div className="task-item-main">
+                <input
+                  className="task-checkbox"
+                  type="checkbox"
+                  checked={!!task.completed}
+                  onChange={(e) => handleChange(task, 'completed', e.target.checked)}
+                />
+                <input
+                  className={`task-input ${task.completed ? 'completed' : ''}`}
+                  type="text"
+                  value={task.content || ''}
+                  onChange={(e) => handleChange(task, 'content', e.target.value)}
+                  placeholder="Start with: ___"
+                  autoFocus={task.isNew}
+                />
+              </div>
+              {task.id && !task.id.startsWith('empty-') && (
+                <button 
+                  className="task-delete-btn" 
+                  onClick={() => onDeleteTask(task.id)}
+                  title="Delete task"
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
             </div>
           ))}
           

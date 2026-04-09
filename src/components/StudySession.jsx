@@ -25,7 +25,7 @@ function formatTime(totalSeconds) {
   return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
-export default function StudySession({ date, existingEntry, onEndSession, onMinimize, tasks, onUpdateTask }) {
+export default function StudySession({ date, existingEntry, onEndSession, onMinimize, tasks, onUpdateTask, onDeleteTask }) {
   const [totalTime, setTotalTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -296,7 +296,12 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
         {/* Inline Task Panel */}
         {!showEndConfirm && tasks && onUpdateTask && (
           <div className="session-task-panel">
-            <TaskPanel tasks={tasks} onUpdateTask={onUpdateTask} compact />
+            <TaskPanel 
+              tasks={tasks} 
+              onUpdateTask={onUpdateTask} 
+              onDeleteTask={onDeleteTask}
+              compact 
+            />
           </div>
         )}
 

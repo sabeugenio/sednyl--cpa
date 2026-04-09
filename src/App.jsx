@@ -354,16 +354,12 @@ function Dashboard({ session, onLogout }) {
         return t;
       });
       if (!found) {
-        // If it's a new task but empty, don't add it yet unless it's a structural update
         if (!updatedTask.content && !updatedTask.isNew) return prev;
         updated.push({ ...updatedTask, id: updatedTask.id || `temp-${Date.now()}` });
       }
-      // Immediate cleanup: remove tasks that are emptied and not currently being edited? 
-      // Actually, let the filter during save handle it to avoid flickering while typing.
       return updated;
     });
 
-    // Debounce save — use tasksRef to always read the latest state
     if (taskSaveTimerRef.current) clearTimeout(taskSaveTimerRef.current);
     taskSaveTimerRef.current = setTimeout(async () => {
       try {
@@ -377,6 +373,24 @@ function Dashboard({ session, onLogout }) {
         console.error('Failed to save tasks:', err);
       }
     }, 5000);
+  };
+
+  const handleDeleteTask = (taskId) => {
+    setTasks((prev) => prev.filter(t => t.id !== taskId));
+    
+    if (taskSaveTimerRef.current) clearTimeout(taskSaveTimerRef.current);
+    taskSaveTimerRef.current = setTimeout(async () => {
+      try {
+        const latestTasks = tasksRef.current;
+        const tasksToSave = latestTasks
+          .filter((t) => t.content || t.completed)
+          .map((t) => ({ type: t.type, content: t.content, completed: t.completed ? 1 : 0 }));
+        await saveTasks(tasksToSave);
+        await loadTasks();
+      } catch (err) {
+        console.error('Failed to save tasks after deletion:', err);
+      }
+    }, 1000);
   };
 
   // Toast
@@ -467,7 +481,11 @@ function Dashboard({ session, onLogout }) {
             <TotalTimeWidget entries={entries} />
             <StudyGuidance currentPhase={currentPhase} onPhaseChange={handlePhaseChange} />
             <WeeklySuccess entries={entries} />
-            <TaskPanel tasks={tasks} onUpdateTask={handleUpdateTask} />
+            <TaskPanel 
+              tasks={tasks} 
+              onUpdateTask={handleUpdateTask} 
+              onDeleteTask={handleDeleteTask}
+            />
           </div>
         </div>
 
@@ -494,6 +512,7 @@ function Dashboard({ session, onLogout }) {
           onMinimize={handleMinimize}
           tasks={tasks}
           onUpdateTask={handleUpdateTask}
+          onDeleteTask={handleDeleteTask}
         />
       )}
 
