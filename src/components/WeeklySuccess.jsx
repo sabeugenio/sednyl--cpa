@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Star, Leaf, Sprout, Heart, Flame } from 'lucide-react';
 
-const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const DAY_LABELS = ['S', 'M', 'T', 'W', 'TH', 'F', 'S'];
 
 // Normalize legacy status to new status for counting
 function isPositiveStatus(status) {
@@ -21,18 +21,18 @@ export default function WeeklySuccess({ entries }) {
   const { weekDays, message, streak } = useMemo(() => {
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0=Sun
-    // Find Monday of this week
-    const monday = new Date(today);
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    monday.setDate(today.getDate() + diff);
+    // Find Sunday of this week
+    const sunday = new Date(today);
+    const diff = -dayOfWeek;
+    sunday.setDate(today.getDate() + diff);
 
     const weekDays = [];
     let showedUpCount = 0;
     let hasStrong = false;
 
     for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
+      const d = new Date(sunday);
+      d.setDate(sunday.getDate() + i);
       const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const entry = entries[dateStr];
       const status = entry?.status || null;
