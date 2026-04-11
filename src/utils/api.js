@@ -1,4 +1,6 @@
 import { supabase } from './supabase.js';
+import { sileo } from 'sileo';
+import React from 'react';
 
 export const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
 
@@ -17,10 +19,22 @@ async function apiFetch(endpoint, options = {}) {
 
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody.error || `API error: ${res.status}`);
+    const errMsg = errorBody.error || `API error: ${res.status}`;
+    sileo.error({
+      title: "Error",
+      description: React.createElement('span', { style: { color: '#d4d4d8' } }, errMsg)
+    });
+    throw new Error(errMsg);
   }
 
-  return res.json();
+  const result = await res.json();
+  if (options.successMessage) {
+    sileo.success({
+      title: "Changes Saved",
+      description: React.createElement('span', { style: { color: '#d4d4d8' } }, `${options.successMessage} successfully.`)
+    });
+  }
+  return result;
 }
 
 export async function fetchEntries() {
@@ -98,6 +112,7 @@ export async function fetchPlaylists() {
 export async function savePlaylist(playlist) {
   return apiFetch(`/playlists`, {
     method: 'POST',
+    successMessage: 'Playlist saved',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(playlist),
   });
@@ -129,6 +144,7 @@ export async function fetchTopics(done) {
 export async function addTopic(content) {
   return apiFetch(`/topics`, {
     method: 'POST',
+    successMessage: 'Topic added',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content }),
   });
@@ -137,6 +153,7 @@ export async function addTopic(content) {
 export async function updateTopic(id, data) {
   return apiFetch(`/topics/${id}`, {
     method: 'PUT',
+    successMessage: 'Topic updated',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
@@ -145,6 +162,7 @@ export async function updateTopic(id, data) {
 export async function deleteTopic(id) {
   return apiFetch(`/topics/${id}`, {
     method: 'DELETE',
+    successMessage: 'Topic deleted'
   });
 }
 
@@ -156,6 +174,7 @@ export async function fetchSubjects() {
 export async function addSubject(name) {
   return apiFetch(`/subjects`, {
     method: 'POST',
+    successMessage: 'Subject added',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
   });
@@ -164,6 +183,7 @@ export async function addSubject(name) {
 export async function updateSubject(id, data) {
   return apiFetch(`/subjects/${id}`, {
     method: 'PUT',
+    successMessage: 'Subject updated',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
@@ -172,6 +192,7 @@ export async function updateSubject(id, data) {
 export async function deleteSubject(id) {
   return apiFetch(`/subjects/${id}`, {
     method: 'DELETE',
+    successMessage: 'Subject deleted'
   });
 }
 
@@ -187,6 +208,7 @@ export async function fetchSubjectTopics(subjectId, completed) {
 export async function addSubjectTopic(subjectId, title) {
   return apiFetch(`/subjects/topics`, {
     method: 'POST',
+    successMessage: 'Topic linked',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ subjectId, title }),
   });
@@ -195,6 +217,7 @@ export async function addSubjectTopic(subjectId, title) {
 export async function updateSubjectTopic(id, data) {
   return apiFetch(`/subjects/topics/${id}`, {
     method: 'PUT',
+    successMessage: 'Topic link updated',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
@@ -203,6 +226,7 @@ export async function updateSubjectTopic(id, data) {
 export async function deleteSubjectTopic(id) {
   return apiFetch(`/subjects/topics/${id}`, {
     method: 'DELETE',
+    successMessage: 'Topic unlinked'
   });
 }
 
@@ -214,6 +238,7 @@ export async function fetchChecklistItems(topicId) {
 export async function addChecklistItem(topicId, content) {
   return apiFetch(`/subjects/checklists`, {
     method: 'POST',
+    successMessage: 'Checklist item added',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ topicId, content }),
   });
@@ -222,6 +247,7 @@ export async function addChecklistItem(topicId, content) {
 export async function updateChecklistItem(id, data) {
   return apiFetch(`/subjects/checklists/${id}`, {
     method: 'PUT',
+    successMessage: 'Checklist item updated',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
@@ -230,6 +256,7 @@ export async function updateChecklistItem(id, data) {
 export async function deleteChecklistItem(id) {
   return apiFetch(`/subjects/checklists/${id}`, {
     method: 'DELETE',
+    successMessage: 'Checklist item deleted'
   });
 }
 
@@ -250,6 +277,7 @@ export async function addCountdown(arg1, arg2) {
   const { title, targetDate, startDate, endDate, color } = payload || {};
   return apiFetch(`/countdowns`, {
     method: 'POST',
+    successMessage: 'Important date added',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title, targetDate, startDate, endDate, color }),
   });
@@ -258,6 +286,7 @@ export async function addCountdown(arg1, arg2) {
 export async function updateCountdown(id, data) {
   return apiFetch(`/countdowns/${id}`, {
     method: 'PUT',
+    successMessage: 'Important date updated',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
@@ -266,6 +295,7 @@ export async function updateCountdown(id, data) {
 export async function deleteCountdown(id) {
   return apiFetch(`/countdowns/${id}`, {
     method: 'DELETE',
+    successMessage: 'Important date deleted'
   });
 }
 

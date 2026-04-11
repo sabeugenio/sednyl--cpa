@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Square, Flame, Trophy, Sprout, Sun, RotateCcw, CornerUpLeft } from 'lucide-react';
 import { updateSession, API_URL } from '../utils/api';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/timerStorage';
+import { sileo } from 'sileo';
 import TaskPanel from './TaskPanel';
 
 const STATUS_CONFIG = {
@@ -71,7 +72,7 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
 
     // 2) Fall back to server entry
     if (existingEntry) {
-      const baseTime = existingEntry.total_time_seconds || 0;
+      const baseTime = Number(existingEntry.total_time_seconds) || 0;
       savedTimeRef.current = baseTime;
 
       if (existingEntry.is_running && existingEntry.last_start_time) {
@@ -187,6 +188,11 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
     setHasStarted(true);
     saveTimerState(date, savedTimeRef.current, now, true);
     persistSession(savedTimeRef.current, true);
+
+    sileo.success({
+      title: "Session Started",
+      description: <span style={{ color: '#d4d4d8' }}>"I pray that God grants you clear understanding and deep wisdom as you study today. 'If any of you lacks wisdom, you should ask God, and it will be given to you.' — James 1:5"</span>
+    });
   };
 
   const handlePause = () => {
@@ -245,7 +251,7 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
           <span className="session-date-label">
             {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </span>
-          <div className={`session-status-badge status-${currentStatus}`} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className={`session-status-badge status-${currentStatus}`} style={{ alignItems: 'center', gap: '6px' }}>
             {statusInfo.icon} {statusInfo.label}
           </div>
         </div>

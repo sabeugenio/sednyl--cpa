@@ -25,6 +25,7 @@ import {
   ChevronRight,
   RotateCcw
 } from 'lucide-react';
+import { sileo } from 'sileo';
 
 export default function SubjectsPanel() {
   // Subjects and Topics state
@@ -180,6 +181,18 @@ export default function SubjectsPanel() {
   // Toggle topic completed status
   const handleToggleTopic = async (subjectId, topic) => {
     try {
+      // Validation: Check if all checklist items are completed
+      const checklist = checklistsByTopic[topic.id] || [];
+      const hasIncomplete = checklist.some(item => !item.completed);
+      
+      if (hasIncomplete) {
+        sileo.error({
+          title: "Incomplete Items",
+          description: "Please complete all checklist items before marking this topic as finished."
+        });
+        return;
+      }
+
       await updateSubjectTopic(topic.id, { completed: 1 });
       setTopicsBySubject((prev) => ({
         ...prev,
@@ -372,9 +385,9 @@ export default function SubjectsPanel() {
                 const completedChecklists = checklists.filter((i) => i.completed).length;
 
                 return (
-                  <div key={topic.id} className="topic-item nested">
-                    <button
-                      className="topic-toggle-btn"
+                  <div key={topic.id} className={`topic-item nested ${isTopicExpanded ? 'is-expanded' : ''}`}>
+                    <div 
+                      className={`topic-item-header ${isTopicExpanded ? 'header-expanded' : ''}`}
                       onClick={() => {
                         const newSet = new Set(expandedTopics);
                         if (newSet.has(topic.id)) {
@@ -384,37 +397,58 @@ export default function SubjectsPanel() {
                         }
                         setExpandedTopics(newSet);
                       }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          const newSet = new Set(expandedTopics);
+                          if (newSet.has(topic.id)) {
+                            newSet.delete(topic.id);
+                          } else {
+                            newSet.add(topic.id);
+                          }
+                          setExpandedTopics(newSet);
+                        }
+                      }}
+                      aria-expanded={isTopicExpanded}
                     >
-                      <ChevronRight
-                        size={12}
-                        style={{
-                          transform: isTopicExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                          transition: 'transform 0.2s ease',
-                        }}
-                      />
-                    </button>
-
-                    <input
-                      className="topic-checkbox"
-                      type="checkbox"
-                      checked={false}
-                      onChange={() => handleToggleTopic(subject.id, topic)}
-                    />
-
-                    <span className="topic-text">{topic.title}</span>
-                    {checklists.length > 0 && (
-                      <span className="checklist-progress">
-                        {completedChecklists}/{checklists.length}
+                      <span className="topic-toggle-icon">
+                        <ChevronRight
+                          size={12}
+                          style={{
+                            transform: isTopicExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease',
+                          }}
+                        />
                       </span>
-                    )}
 
-                    <button
-                      className="topic-delete-btn"
-                      onClick={() => requestDeleteTopic(subject.id, topic)}
-                      title="Delete topic"
-                    >
-                      <X size={12} />
-                    </button>
+                      <input
+                        className="topic-checkbox"
+                        type="checkbox"
+                        checked={false}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => handleToggleTopic(subject.id, topic)}
+                      />
+
+                      <span className="topic-text">{topic.title}</span>
+                      {checklists.length > 0 && (
+                        <span className="checklist-progress">
+                          {completedChecklists}/{checklists.length}
+                        </span>
+                      )}
+
+                      <button
+                        className="topic-delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          requestDeleteTopic(subject.id, topic);
+                        }}
+                        title="Delete topic"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
 
                     {/* Checklist items */}
                     {isTopicExpanded && (
@@ -643,10 +677,9 @@ export default function SubjectsPanel() {
               </button>
             )}
           </div>
-
-          {/* View completed topics button */}
-          {totalCompletedTopics > 0 && (
-            <button
+        </div>
+         {/* View completed topics button */}
+          <button
               className="topics-done-btn"
               onClick={() => setShowCompletedModal(true)}
             >
@@ -654,8 +687,6 @@ export default function SubjectsPanel() {
               <span>View completed topics</span>
               <span className="topics-done-badge">{totalCompletedTopics}</span>
             </button>
-          )}
-        </div>
       </div>
 
       {/* Confirmation Modal for Deleting Subject */}

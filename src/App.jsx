@@ -21,6 +21,7 @@ import { fetchEntries, fetchEntryByDate, saveEntry, fetchTasks, saveTasks, expor
 import { loadTimerState, clearTimerState } from './utils/timerStorage';
 
 import { Flame, Trophy, Sprout, Sun } from 'lucide-react';
+import { sileo, Toaster } from 'sileo';
 
 function getTodayStr() {
   const now = new Date();
@@ -84,7 +85,6 @@ function Dashboard({ session, onLogout }) {
   const [entries, setEntries] = useState({});
   const [tasks, setTasks] = useState([]);
   const [countdowns, setCountdowns] = useState([]);
-  const [toast, setToast] = useState(null);
   const [justSavedDate, setJustSavedDate] = useState(null);
   const [currentPhase, setCurrentPhase] = useState('1');
   const importInputRef = useRef(null);
@@ -286,6 +286,12 @@ function Dashboard({ session, onLogout }) {
     setShowFullTimer(false);
     clearTimerState(); // Clear sessionStorage
 
+    sileo.success({
+      title: "Session Completed",
+      description: <span style={{ color: '#d4d4d8' }}>"Thank God for sustaining your focus. I pray He multiplies the knowledge you've gained today. 'Whatever you do, work heartily, as for the Lord.' — Colossians 3:23"</span>,
+      position: "top-right"
+    });
+
     // Fetch the latest entry to carry over any existing journal data
     let entry = null;
     try {
@@ -445,8 +451,11 @@ function Dashboard({ session, onLogout }) {
 
   // Toast
   const showToastMessage = (message) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 2500);
+    const text = typeof message === 'object' && message.text ? message.text : message;
+    sileo.success({
+      title: "Success",
+      description: <span style={{ color: '#d4d4d8' }}>{text}</span>
+    });
   };
 
   const getToastMessage = (status) => {
@@ -492,6 +501,7 @@ function Dashboard({ session, onLogout }) {
 
   return (
     <>
+      <Toaster position="top-center" theme="dark" options={{ fill: '#0e0e0e' }} />
       <Header user={session.user} onLogout={onLogout} />
       <div className="app-layout">
         {/* Mini Timer on home page when session is active but not in full-screen */}
@@ -591,12 +601,6 @@ function Dashboard({ session, onLogout }) {
           onSave={handleSaveEntry}
           onClose={() => setViewEntry(null)}
         />
-      )}
-
-      {toast && (
-        <div className="toast" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {toast.text} {toast.icon}
-        </div>
       )}
 
       {/* CPALE Study Chatbot */}

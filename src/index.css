@@ -1587,7 +1587,7 @@ body {
 .study-session-container {
   text-align: center;
   padding: 2rem;
-  max-width: 500px;
+  max-width: 700px;
   width: 100%;
 }
 
@@ -1644,6 +1644,7 @@ body {
 
 .timer-digits {
   font-family: 'Inter', 'Inter Fallback', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-variant-numeric: tabular-nums;
   font-size: 7rem;
   font-weight: 900;
   color: var(--text-primary);
@@ -1676,6 +1677,11 @@ body {
   gap: 0.85rem;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+.session-task-panel {
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .session-btn {
@@ -4275,35 +4281,46 @@ body {
 
 .topic-item.nested {
   display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.5rem;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0.75rem;
+  padding: 0;
   border-radius: var(--radius-sm);
   transition: all var(--transition-base);
   position: relative;
 }
 
-.topic-item.nested:hover {
+.topic-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  flex: 1;
+  min-height: 40px; /* Ensure a decent target size even for short text */
+}
+
+.topic-item-header:hover,
+.topic-item-header.header-expanded {
   background: var(--bg-hover);
 }
 
-.topic-toggle-btn {
+.topic-item.is-expanded {
+  background: rgba(var(--bg-secondary-rgb, 245, 245, 245), 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+}
+
+.topic-toggle-icon {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 18px;
   height: 18px;
-  border: none;
-  background: transparent;
   color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all var(--transition-base);
   flex-shrink: 0;
-}
-
-.topic-toggle-btn:hover {
-  background: var(--bg-secondary);
 }
 
 .checklist-progress {
@@ -5110,3 +5127,22 @@ body {
   opacity: 0.8;
 }
 
+
+[data-sileo-viewport] {
+  z-index: 9999 !important;
+}
+
+/* Sileo Toast Overrides */
+[data-sileo-toast] [data-sileo-description] {
+  color: #d2d2d2 !important;
+  opacity: 1 !important;
+}
+
+/* Fallback for common sileo internal classes */
+.sileo-description, 
+[data-description],
+[data-sileo-toast] p,
+[data-sileo-toast] span:not([data-sileo-title]) {
+  color: #d2d2d2 !important;
+  opacity: 1 !important;
+}
