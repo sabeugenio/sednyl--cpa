@@ -642,8 +642,8 @@ export default function SubjectsPanel() {
               <ChevronDown size={14} />
             </>
           )}
-          {!expanded && totalActiveTopics > 0 && (
-            <span className="topics-count-badge">{totalActiveTopics}</span>
+          {!expanded && hiddenSubjects.length > 0 && (
+            <span className="topics-count-badge">{hiddenSubjects.length}</span>
           )}
         </button>
 
