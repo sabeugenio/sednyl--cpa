@@ -312,9 +312,9 @@ export default function SubjectsPanel() {
   const totalActiveTopics = Object.values(topicsBySubject).reduce((sum, topics) => sum + topics.length, 0);
   const totalCompletedTopics = Object.values(completedTopicsBySubject).reduce((sum, topics) => sum + topics.length, 0);
   const totalTopics = totalActiveTopics + totalCompletedTopics;
-  const focusedSubjectIdSet = new Set([...focusMainIds, ...focusLightIds].map((id) => String(id)));
-  const focusedSubjects = subjects.filter((s) => focusedSubjectIdSet.has(String(s.id)));
-  const hiddenSubjects = subjects.filter((s) => !focusedSubjectIdSet.has(String(s.id)));
+  const mainSubjects = subjects.filter((s) => focusMainIds.includes(String(s.id)));
+  const lightSubjects = subjects.filter((s) => focusLightIds.includes(String(s.id)));
+  const hiddenSubjects = subjects.filter((s) => !focusMainIds.includes(String(s.id)) && !focusLightIds.includes(String(s.id)));
 
   const renderSubjectItem = (subject) => {
     const isSubjectExpanded = expandedSubjects.has(subject.id);
@@ -610,10 +610,22 @@ export default function SubjectsPanel() {
           </div>
         )}
 
-        {/* Focused subjects (Main/Light) always visible */}
-        {focusedSubjects.length > 0 && (
-          <div className="subjects-list">
-            {focusedSubjects.map((subject) => renderSubjectItem(subject))}
+        {/* Focus sections */}
+        {mainSubjects.length > 0 && (
+          <div className="subjects-section">
+            <div className="subjects-section-label">Main</div>
+            <div className="subjects-list">
+              {mainSubjects.map((subject) => renderSubjectItem(subject))}
+            </div>
+          </div>
+        )}
+
+        {lightSubjects.length > 0 && (
+          <div className="subjects-section">
+            <div className="subjects-section-label">Light</div>
+            <div className="subjects-list">
+              {lightSubjects.map((subject) => renderSubjectItem(subject))}
+            </div>
           </div>
         )}
 
