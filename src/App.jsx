@@ -288,7 +288,7 @@ function Dashboard({ session, onLogout }) {
 
     sileo.success({
       title: "Session Completed",
-      description: <span style={{ color: '#d4d4d8' }}>"Thank God for sustaining your focus. I pray He multiplies the knowledge you've gained today. 'Whatever you do, work heartily, as for the Lord.' — Colossians 3:23"</span>,
+      description: <span style={{ color: '#d4d4d8' }}>Thank God for sustaining your focus. I pray He multiplies the knowledge you've gained today. 'Whatever you do, work heartily, as for the Lord.' — Colossians 3:23</span>,
       position: "top-right"
     });
 
