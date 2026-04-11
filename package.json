@@ -11,6 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dayflow/blossom-color-picker": "^2.2.0",
+    "@dayflow/blossom-color-picker-react": "^1.2.0",
     "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.101.1",
     "cors": "^2.8.6",

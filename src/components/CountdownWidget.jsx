@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Timer, Plus, X, Trash2, Edit2, Check } from 'lucide-react';
 import { fetchCountdowns, addCountdown, updateCountdown, deleteCountdown } from '../utils/api';
+import { BlossomColorPicker } from '@dayflow/blossom-color-picker-react';
+import '@dayflow/blossom-color-picker/styles.css';
+
+const EXTENDED_COLORS = [
+  '#f87171', '#fb923c', '#fbbf24', '#facc15', '#a3e635', '#4ade80', '#34d399', '#2dd4bf', 
+  '#38bdf8', '#60a5fa', '#818cf8', '#a78bfa', '#c084fc', '#e879f9', '#f472b6', '#fb7185',
+  '#dc2626', '#ea580c', '#d97706', '#ca8a04', '#65a30d', '#16a34a', '#059669', '#0d9488',
+  '#0284c7', '#2563eb', '#4f46e5', '#7c3aed', '#9333ea', '#c026d3', '#db2777', '#e11d48',
+  '#fca5a5', '#fdba74', '#fcd34d', '#fef08a', '#bef264', '#86efac', '#6ee7b7', '#5eead4'
+];
 
 function CountdownWidget({ onChanged }) {
   const [countdowns, setCountdowns] = useState([]);
@@ -13,7 +23,7 @@ function CountdownWidget({ onChanged }) {
   const [newDate, setNewDate] = useState('');
   const [newStartDate, setNewStartDate] = useState('');
   const [newEndDate, setNewEndDate] = useState('');
-  const [newColor, setNewColor] = useState('pink'); // green | yellow | pink | purple | blue
+  const [newColor, setNewColor] = useState('#EC4899'); // default pink hex
 
   // Edit state
   const [editingId, setEditingId] = useState(null);
@@ -22,15 +32,7 @@ function CountdownWidget({ onChanged }) {
   const [editDate, setEditDate] = useState('');
   const [editStartDate, setEditStartDate] = useState('');
   const [editEndDate, setEditEndDate] = useState('');
-  const [editColor, setEditColor] = useState('pink');
-
-  const COLOR_OPTIONS = [
-    { id: 'green', label: 'Green' },
-    { id: 'yellow', label: 'Yellow' },
-    { id: 'pink', label: 'Pink' },
-    { id: 'purple', label: 'Purple' },
-    { id: 'blue', label: 'Blue' },
-  ];
+  const [editColor, setEditColor] = useState('#EC4899');
 
   const toDateTimeLocalValue = (value) => {
     // `datetime-local` accepts: YYYY-MM-DDTHH:MM (no timezone).
@@ -84,7 +86,7 @@ function CountdownWidget({ onChanged }) {
       setNewDate('');
       setNewStartDate('');
       setNewEndDate('');
-      setNewColor('pink');
+      setNewColor('#EC4899');
       loadCountdowns();
       onChanged?.();
     } catch (error) {
@@ -95,7 +97,7 @@ function CountdownWidget({ onChanged }) {
   const handleEdit = (c) => {
     setEditingId(c.id);
     setEditTitle(c.title);
-    setEditColor(c.color || 'pink');
+    setEditColor(c.color || '#EC4899');
     if (c.start_date && c.end_date) {
       setEditDateMode('range');
       setEditStartDate(toDateTimeLocalValue(c.start_date));
@@ -315,21 +317,14 @@ function CountdownWidget({ onChanged }) {
                   autoFocus
                 />
               </div>
-              <div className="input-group">
-                <label>COLOR LABEL</label>
-                <div className="countdown-color-picker" role="radiogroup" aria-label="Countdown color">
-                  {COLOR_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      className={`countdown-color-swatch color-${opt.id} ${newColor === opt.id ? 'selected' : ''}`}
-                      onClick={() => setNewColor(opt.id)}
-                      aria-pressed={newColor === opt.id}
-                      title={opt.label}
-                    >
-                      <span className="sr-only">{opt.label}</span>
-                    </button>
-                  ))}
+              <div className="input-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 50 }}>
+                <label style={{ marginBottom: 0 }}>COLOR LABEL</label>
+                <div className="countdown-color-picker" aria-label="Countdown color" style={{ position: 'relative', zIndex: 51 }}>
+                  <BlossomColorPicker 
+                    colors={EXTENDED_COLORS}
+                    sliderPosition="left"
+                    onChange={(c) => setNewColor(c.hex)}
+                  />
                 </div>
               </div>
               <div className="input-group">
@@ -440,21 +435,14 @@ function CountdownWidget({ onChanged }) {
                             className="editor-input"
                           />
                         </div>
-                      <div className="input-group">
-                        <label>COLOR LABEL</label>
-                        <div className="countdown-color-picker" role="radiogroup" aria-label="Countdown color">
-                          {COLOR_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              className={`countdown-color-swatch color-${opt.id} ${editColor === opt.id ? 'selected' : ''}`}
-                              onClick={() => setEditColor(opt.id)}
-                              aria-pressed={editColor === opt.id}
-                              title={opt.label}
-                            >
-                              <span className="sr-only">{opt.label}</span>
-                            </button>
-                          ))}
+                      <div className="input-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 50 }}>
+                        <label style={{ marginBottom: 0 }}>COLOR LABEL</label>
+                        <div className="countdown-color-picker" aria-label="Countdown color" style={{ position: 'relative', zIndex: 51 }}>
+                          <BlossomColorPicker 
+                            colors={EXTENDED_COLORS}
+                            sliderPosition="left"
+                            onChange={(c) => setEditColor(c.hex)}
+                          />
                         </div>
                       </div>
                         <div className="input-group">
@@ -543,7 +531,11 @@ function CountdownWidget({ onChanged }) {
                     <div className="item-card-inner">
                       <div className="item-card-header">
                         <span className="item-title">
-                          <span className={`countdown-legend-dot color-${c.color || 'pink'}`} aria-hidden="true" />
+                          <span 
+                            className={`countdown-legend-dot ${(!c.color || c.color.startsWith('#')) ? '' : `color-${c.color}`}`} 
+                            style={c.color && c.color.startsWith('#') ? { backgroundColor: c.color } : { backgroundColor: !c.color ? '#EC4899' : undefined }}
+                            aria-hidden="true" 
+                          />
                           {c.title}
                         </span>
                         <div className="item-header-actions">

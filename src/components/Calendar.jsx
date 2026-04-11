@@ -134,7 +134,11 @@ export default function Calendar({ year, month, entries, countdowns = [], onDayC
               {item.countdownColors?.length > 0 && (
                 <div className="countdown-mark-stack" aria-hidden="true">
                   {item.countdownColors.slice(0, 4).map((c) => (
-                    <span key={c} className={`countdown-mark color-${c}`} />
+                    <span 
+                      key={c} 
+                      className={`countdown-mark ${(!c || c.startsWith('#')) ? '' : `color-${c}`}`} 
+                      style={c?.startsWith('#') ? { backgroundColor: c } : { backgroundColor: !c ? '#EC4899' : undefined }} 
+                    />
                   ))}
                 </div>
               )}

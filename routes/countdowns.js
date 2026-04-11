@@ -5,12 +5,9 @@ import { expressAuth } from '../auth.js';
 const router = express.Router();
 router.use(expressAuth);
 
-const ALLOWED_COLORS = new Set(['green', 'yellow', 'pink', 'purple', 'blue']);
-
 function normalizeCountdownColor(value) {
-  if (typeof value !== 'string') return 'pink';
-  const v = value.trim().toLowerCase();
-  return ALLOWED_COLORS.has(v) ? v : 'pink';
+  if (typeof value !== 'string' || !value.trim()) return '#EC4899';
+  return value.trim();
 }
 
 function isValidDateString(value) {
@@ -153,7 +150,7 @@ router.put('/:id', async (req, res) => {
 
     values.push(id);
     values.push(req.user.id);
-    
+
     const { rows } = await pool.query(
       `UPDATE study_countdowns SET ${updates.join(', ')} WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1} RETURNING *`,
       values
