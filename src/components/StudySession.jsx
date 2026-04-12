@@ -256,11 +256,26 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
           </div>
         </div>
 
-        <div className="timer-display">
-          <div className={`timer-digits ${isRunning ? 'running' : ''}`}>
-            {formatTime(totalTime)}
+        <div className="session-main-row">
+          <div className="timer-display">
+            <div className={`timer-digits ${isRunning ? 'running' : ''}`}>
+              {formatTime(totalTime)}
+            </div>
+            {isRunning && <div className="timer-pulse" />}
           </div>
-          {isRunning && <div className="timer-pulse" />}
+
+          {/* Inline Task Panel */}
+          {!showEndConfirm && tasks && onUpdateTask && (
+            <div className="session-task-panel">
+              <TaskPanel 
+                tasks={tasks} 
+                onUpdateTask={onUpdateTask} 
+                onDeleteTask={onDeleteTask}
+                onDeleteTaskList={onDeleteTaskList}
+                compact 
+              />
+            </div>
+          )}
         </div>
 
         {!showEndConfirm && (
@@ -298,18 +313,6 @@ export default function StudySession({ date, existingEntry, onEndSession, onMini
             </button>
           )}
         </div>
-        )}
-        {/* Inline Task Panel */}
-        {!showEndConfirm && tasks && onUpdateTask && (
-          <div className="session-task-panel">
-            <TaskPanel 
-              tasks={tasks} 
-              onUpdateTask={onUpdateTask} 
-              onDeleteTask={onDeleteTask}
-              onDeleteTaskList={onDeleteTaskList}
-              compact 
-            />
-          </div>
         )}
 
         {/* End Session Confirmation */}
