@@ -3,8 +3,8 @@ import { supabase } from '../utils/supabase';
 import { Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
 import Footer from './Footer';
 
-export default function AuthPage() {
-  const [mode, setMode] = useState('login'); // 'login' or 'register'
+export default function AuthPage({ defaultMode = 'login', onPasswordUpdated }) {
+  const [mode, setMode] = useState(defaultMode); // 'login', 'register', 'forgot_password', or 'update_password'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -76,6 +76,65 @@ export default function AuthPage() {
     }
   };
 
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      setSuccess('Password reset link sent! Check your email.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+      if (error) throw error;
+      setSuccess('Password updated successfully!');
+      if (onPasswordUpdated) {
+        setTimeout(onPasswordUpdated, 2000);
+      } else {
+        setMode('login');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-card">
@@ -86,9 +145,9 @@ export default function AuthPage() {
         </div>
 
         {/* Tab Toggle */}
-        <div className="auth-tabs">
+        <div className="auth-tabs" style={{ display: mode === 'update_password' ? 'none' : 'flex' }}>
           <button
-            className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
+            className={`auth-tab ${mode === 'login' || mode === 'forgot_password' ? 'active' : ''}`}
             onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
           >
             Sign In
@@ -133,7 +192,7 @@ export default function AuthPage() {
               </div>
             </div>
 
-            <div className="auth-field">
+            <div className="auth-field" style={{ marginBottom: '8px' }}>
               <label className="auth-label" htmlFor="login-password">Password</label>
               <div className="auth-input-wrapper">
                 <Lock size={16} className="auth-input-icon" />
@@ -158,11 +217,122 @@ export default function AuthPage() {
               </div>
             </div>
 
+            <div style={{ textAlign: 'right', marginBottom: '16px' }}>
+              <button
+                type="button"
+                className="auth-switch-btn"
+                style={{ fontSize: '0.8rem' }}
+                onClick={() => { setMode('forgot_password'); setError(''); setSuccess(''); }}
+              >
+                Forgot Password?
+              </button>
+            </div>
+
             <button type="submit" className="auth-submit" disabled={loading}>
               {loading ? (
                 <><Loader2 size={16} className="auth-spinner" /> Signing in...</>
               ) : (
                 'Sign In'
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* Forgot Password Form */}
+        {mode === 'forgot_password' && (
+          <form onSubmit={handleResetPassword} className="auth-form">
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px', textAlign: 'center' }}>
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="reset-email">Email</label>
+              <div className="auth-input-wrapper">
+                <Mail size={16} className="auth-input-icon" />
+                <input
+                  id="reset-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoComplete="email"
+                  className="auth-input"
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="auth-submit" disabled={loading}>
+              {loading ? (
+                <><Loader2 size={16} className="auth-spinner" /> Sending link...</>
+              ) : (
+                'Send Reset Link'
+              )}
+            </button>
+            <div style={{ textAlign: 'center', marginTop: '16px' }}>
+              <button
+                type="button"
+                className="auth-switch-btn"
+                onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
+              >
+                Back to Sign In
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Update Password Form */}
+        {mode === 'update_password' && (
+          <form onSubmit={handleUpdatePassword} className="auth-form">
+            <h2 style={{ fontSize: '1.2rem', textAlign: 'center', marginBottom: '16px' }}>Update Password</h2>
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="update-password">New Password</label>
+              <div className="auth-input-wrapper">
+                <Lock size={16} className="auth-input-icon" />
+                <input
+                  id="update-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min. 6 characters"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  className="auth-input"
+                />
+                <button
+                  type="button"
+                  className="auth-eye-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="update-confirm">Confirm New Password</label>
+              <div className="auth-input-wrapper">
+                <Lock size={16} className="auth-input-icon" />
+                <input
+                  id="update-confirm"
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter password"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  className="auth-input"
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="auth-submit" disabled={loading}>
+              {loading ? (
+                <><Loader2 size={16} className="auth-spinner" /> Updating...</>
+              ) : (
+                'Update Password'
               )}
             </button>
           </form>
@@ -259,17 +429,19 @@ export default function AuthPage() {
           </form>
         )}
 
-        <p className="auth-footer">
-          {mode === 'login'
-            ? "Don't have an account? "
-            : 'Already have an account? '}
-          <button
-            className="auth-switch-btn"
-            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setSuccess(''); }}
-          >
-            {mode === 'login' ? 'Create one' : 'Sign in'}
-          </button>
-        </p>
+        {mode !== 'forgot_password' && mode !== 'update_password' && (
+          <p className="auth-footer">
+            {mode === 'login'
+              ? "Don't have an account? "
+              : 'Already have an account? '}
+            <button
+              className="auth-switch-btn"
+              onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setSuccess(''); }}
+            >
+              {mode === 'login' ? 'Create one' : 'Sign in'}
+            </button>
+          </p>
+        )}
       </div>
       <Footer />
     </div>

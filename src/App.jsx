@@ -39,8 +39,14 @@ function App() {
   // ── Auth state ──
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   useEffect(() => {
+    // Check if URL has recovery token
+    if (window.location.hash.includes('type=recovery')) {
+      setRecoveryMode(true);
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -48,7 +54,10 @@ function App() {
     });
 
     // Listen for changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecoveryMode(true);
+      }
       setSession(session);
     });
 
@@ -70,8 +79,19 @@ function App() {
     );
   }
 
+  // If user clicked a reset password link in their email
+  if (recoveryMode) {
+    return <AuthPage defaultMode="update_password" onPasswordUpdated={() => {
+      setRecoveryMode(false);
+      // Clean up the URL hash so refresh doesn't trigger recovery mode again
+      if (window.location.hash) {
+        window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+      }
+    }} />;
+  }
+
   if (!session) {
-    return <AuthPage />;
+    return <AuthPage defaultMode="login" />;
   }
 
   // ── Authenticated app below ──
